@@ -1,4 +1,7 @@
+// Импорт React и хука useEffect для работы с эффектами.
 import React, { useEffect } from 'react';
+
+// Импорты компонентов и хуков из react-router-dom для работы с маршрутизацией.
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,10 +9,18 @@ import {
   useLocation,
   useNavigate
 } from 'react-router-dom';
+
+// Импорт хранилища Redux.
 import store from '../../services/store';
+
+// Подключение глобальных и модульных стилей.
 import '../../index.css';
 import styles from './app.module.css';
-import { useDispatch, useSelector } from '../../services/store'; // хуки из store
+
+// Кастомные хуки Redux для удобства работы с dispatch и selector.
+import { useDispatch, useSelector } from '../../services/store';
+
+// Импорты страниц приложения.
 import {
   ConstructorPage,
   Feed,
@@ -21,57 +32,69 @@ import {
   Register,
   ResetPassword
 } from '@pages';
+
+// Импорты общих компонентов.
 import {
   HeaderApp,
   Modal,
   OrderInfo,
   IngredientDetails,
 } from '@components';
-import { ProtectedRoute } from '../protected-route'
+
+// Импорт компонента для защиты маршрутов.
+import { ProtectedRoute } from '../protected-route';
+
+// Импорты экшенов и селекторов Redux.
 import {
   getIngredientsThunk,
   getUserStateSelector,
-  getUserThunk
+  getUserThunk,
 } from '@slices';
+
+// Импорт компонента Preloader для отображения загрузки.
 import { Preloader } from '../ui/preloader';
+
+// Импорт провайдера Redux.
 import { Provider } from 'react-redux';
 
 const App = () => {
+  // Хук для получения текущего местоположения.
   const location = useLocation();
+
+  // Хук для управления переходами.
   const navigate = useNavigate();
+
+  // Хук для отправки экшенов в Redux.
   const dispatch = useDispatch();
-  //const { isLoading } = useSelector(getUserStateSelector);
+
+  // Получение статуса загрузки пользователя из хранилища.
+  const userLoading = useSelector(getUserStateSelector).isLoading;
+
+  // Проверка, если есть фоновое местоположение для модальных окон.
   const backgroundLocation = location.state?.background;
 
+  // Выполнение эффектов при монтировании компонента.
   useEffect(() => {
+    // Запрос данных о пользователе.
     dispatch(getUserThunk());
+    // Запрос данных об ингредиентах.
     dispatch(getIngredientsThunk());
   }, [dispatch]);
 
-  //if (isLoading) {
-   // return <Preloader />;
-  //}
-
   return (
     <div className={styles.app}>
+      {/* Хедер приложения */}
       <HeaderApp />
+      {/* Определение маршрутов */}
       <Routes location={backgroundLocation || location}>
-        {/* Главная страница */}
+        {/* Главная страница конструктора */}
         <Route path='/' element={<ConstructorPage />} />
-
-        {/* Страница деталей ингредиента */}
-        <Route
-          path='/ingredients/:id'
-          element={<IngredientDetails />}
-        />
-
+        {/* Страница с деталями ингредиента */}
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
         {/* Лента заказов */}
         <Route path='/feed' element={<Feed />} />
-        <Route
-          path='/feed/:number'
-          element={<OrderInfo />}
-        />
-
+        {/* Информация о заказе в ленте */}
+        <Route path='/feed/:number' element={<OrderInfo />} />
         {/* Маршруты для гостей */}
         <Route element={<ProtectedRoute forAuthorized={false} />}>
           <Route path='/login' element={<Login />} />
@@ -79,23 +102,17 @@ const App = () => {
           <Route path='/forgot-password' element={<ForgotPassword />} />
           <Route path='/reset-password' element={<ResetPassword />} />
         </Route>
-
         {/* Маршруты для авторизованных пользователей */}
         <Route element={<ProtectedRoute forAuthorized={true} />}>
           <Route path='/profile'>
             <Route index element={<Profile />} />
             <Route path='orders' element={<ProfileOrders />} />
-            <Route
-              path='orders/:number'
-              element={<OrderInfo />}
-            />
+            <Route path='orders/:number' element={<OrderInfo />} />
           </Route>
         </Route>
-
         {/* Страница не найдена */}
         <Route path='*' element={<NotFound404 />} />
       </Routes>
-
       {/* Обработка модальных окон */}
       {backgroundLocation && (
         <Routes>
@@ -140,11 +157,12 @@ const App = () => {
   );
 };
 
+// Провайдер Redux и маршрутизатор оборачивают приложение.
 const RootApp = () => (
   <Provider store={store}>
-  <Router>
-    <App />
-  </Router>
+    <Router>
+      <App />
+    </Router>
   </Provider>
 );
 
