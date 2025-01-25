@@ -5,7 +5,11 @@ import { OrderInfoUI } from '../ui/order-info'; // UI-компонент для 
 import { TIngredient } from '@utils-types'; // Тип для ингредиентов.
 import { useParams } from 'react-router-dom'; // Хук для получения параметров URL.
 import { useDispatch, useSelector } from '../../services/store'; // Хуки для работы с Redux.
-import { getOrderThunk, getOrderSelector, getIngredientsSelector } from '@slices'; // Диспатчи и селекторы для получения данных о заказе и ингредиентах.
+import {
+  getOrderThunk,
+  getOrderSelector,
+  getIngredientsSelector
+} from '@slices'; // Диспатчи и селекторы для получения данных о заказе и ингредиентах.
 
 // Основной компонент для отображения информации о заказе.
 export const OrderInfo: FC = () => {

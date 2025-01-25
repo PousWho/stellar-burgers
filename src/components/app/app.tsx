@@ -34,12 +34,7 @@ import {
 } from '@pages';
 
 // Импорты общих компонентов.
-import {
-  HeaderApp,
-  Modal,
-  OrderInfo,
-  IngredientDetails,
-} from '@components';
+import { HeaderApp, Modal, OrderInfo, IngredientDetails } from '@components';
 
 // Импорт компонента для защиты маршрутов.
 import { ProtectedRoute } from '../protected-route';
@@ -48,7 +43,7 @@ import { ProtectedRoute } from '../protected-route';
 import {
   getIngredientsThunk,
   getUserStateSelector,
-  getUserThunk,
+  getUserThunk
 } from '@slices';
 
 // Импорт компонента Preloader для отображения загрузки.
@@ -103,7 +98,7 @@ const App = () => {
           <Route path='/reset-password' element={<ResetPassword />} />
         </Route>
         {/* Маршруты для авторизованных пользователей */}
-        <Route element={<ProtectedRoute forAuthorized={true} />}>
+        <Route element={<ProtectedRoute forAuthorized />}>
           <Route path='/profile'>
             <Route index element={<Profile />} />
             <Route path='orders' element={<ProfileOrders />} />
@@ -130,15 +125,12 @@ const App = () => {
           <Route
             path='/ingredients/:id'
             element={
-              <Modal
-                title="Детали ингредиента"
-                onClose={() => navigate(-1)}
-              >
+              <Modal title='Детали ингредиента' onClose={() => navigate(-1)}>
                 <IngredientDetails />
               </Modal>
             }
           />
-          <Route element={<ProtectedRoute forAuthorized={true} />}>
+          <Route element={<ProtectedRoute forAuthorized />}>
             <Route
               path='/profile/orders/:number'
               element={

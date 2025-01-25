@@ -19,7 +19,7 @@ import {
   sendOrderThunk,
   setNullOrderModalData,
   isAuthorizedSelector,
-  getConstructorSelector,
+  getConstructorSelector
 } from '@slices';
 
 // Компонент конструктора бургера.
@@ -31,7 +31,9 @@ export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
 
   // Получение данных конструктора и статусов из хранилища через селектор.
-  const { constructorItems, orderRequest, orderModalData } = useSelector(getConstructorSelector);
+  const { constructorItems, orderRequest, orderModalData } = useSelector(
+    getConstructorSelector
+  );
   const isAuthorized = useSelector(isAuthorizedSelector);
 
   // Расчет итоговой стоимости заказа с использованием useMemo для оптимизации.
@@ -63,7 +65,9 @@ export const BurgerConstructor: FC = () => {
 
       // Получаем ID булки и ингредиентов.
       const bunId = constructorItems.bun._id;
-      const ingredientsIds = constructorItems.ingredients.map((item) => item._id);
+      const ingredientsIds = constructorItems.ingredients.map(
+        (item) => item._id
+      );
 
       // Отправляем заказ, передавая ID булки дважды (в начале и в конце).
       dispatch(sendOrderThunk([bunId, ...ingredientsIds, bunId]));
