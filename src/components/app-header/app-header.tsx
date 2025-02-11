@@ -11,7 +11,7 @@ import { FC } from 'react';
 import { getUserSelector } from '@slices';
 
 // Компонент заголовка приложения.
-export const HeaderApp: FC = () => {
+export const AppHeader: FC = () => {
   // Получение имени пользователя из хранилища через селектор.
   const userName = useSelector(getUserSelector)?.name;
 

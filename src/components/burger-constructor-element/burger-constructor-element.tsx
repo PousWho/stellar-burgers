@@ -1,52 +1,26 @@
-// Импорт React-хуков, типов FC (Functional Component) и ReactElement.
-import { FC, ReactElement, memo, useEffect } from 'react';
-
-// Импорт UI-компонента для элемента конструктора бургера.
+import { FC, memo } from 'react';
+// UI-компонент элемента конструктора
 import { BurgerConstructorElementUI } from '@ui';
-
-// Импорт типа пропсов для компонента.
+// Типы пропсов
 import { BurgerConstructorElementProps } from './type';
-
-// Импорт хука для отправки экшенов в Redux.
+// Хук для работы с Redux
 import { useDispatch } from '../../services/store';
+// Экшены для управления ингредиентами
+import { removeIngredient, moveIngredientDown, moveIngredientUp } from '@slices';
 
-// Импорты экшенов для управления ингредиентами конструктора.
-import {
-  removeIngredient,
-  moveIngredientDown,
-  moveIngredientUp
-} from '@slices';
-
-// Компонент элемента конструктора бургера, обернутый в memo для оптимизации рендеринга.
+// Компонент элемента конструктора бургера
 export const BurgerConstructorElement: FC<BurgerConstructorElementProps> = memo(
   ({ ingredient, index, totalItems }) => {
-    // Хук для отправки экшенов в Redux.
     const dispatch = useDispatch();
 
-    // Обработчик для перемещения ингредиента вниз.
-    const handleMoveDown = () => {
-      dispatch(moveIngredientDown(index));
-    };
-
-    // Обработчик для перемещения ингредиента вверх.
-    const handleMoveUp = () => {
-      dispatch(moveIngredientUp(index));
-    };
-
-    // Обработчик для удаления ингредиента.
-    const handleClose = () => {
-      dispatch(removeIngredient(ingredient.id));
-    };
-
-    // Рендер UI-компонента с передачей всех необходимых данных и обработчиков.
     return (
       <BurgerConstructorElementUI
-        ingredient={ingredient} // Данные об ингредиенте.
-        index={index} // Индекс текущего ингредиента.
-        totalItems={totalItems} // Общее количество ингредиентов.
-        handleMoveUp={handleMoveUp} // Обработчик перемещения вверх.
-        handleMoveDown={handleMoveDown} // Обработчик перемещения вниз.
-        handleClose={handleClose} // Обработчик удаления ингредиента.
+        ingredient={ingredient} // Данные ингредиента
+        index={index} // Индекс в списке
+        totalItems={totalItems} // Общее количество ингредиентов
+        handleMoveUp={() => dispatch(moveIngredientUp(index))} // Переместить вверх
+        handleMoveDown={() => dispatch(moveIngredientDown(index))} // Переместить вниз
+        handleClose={() => dispatch(removeIngredient(ingredient.id))} // Удалить
       />
     );
   }

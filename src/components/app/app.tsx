@@ -34,7 +34,7 @@ import {
 } from '@pages';
 
 // Импорты общих компонентов.
-import { HeaderApp, Modal, OrderInfo, IngredientDetails } from '@components';
+import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
 
 // Импорт компонента для защиты маршрутов.
 import { ProtectedRoute } from '../protected-route';
@@ -79,7 +79,7 @@ const App = () => {
   return (
     <div className={styles.app}>
       {/* Хедер приложения */}
-      <HeaderApp />
+      <AppHeader />
       {/* Определение маршрутов */}
       <Routes location={backgroundLocation || location}>
         {/* Главная страница конструктора */}

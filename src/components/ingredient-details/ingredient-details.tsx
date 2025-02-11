@@ -1,28 +1,24 @@
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 import { Preloader } from '../ui/preloader';
 import { IngredientDetailsUI } from '../ui/ingredient-details';
 import { useSelector } from '../../services/store';
 import { getIngredientsSelector } from '@slices';
 import { useParams } from 'react-router-dom';
 
-// Компонент для отображения деталей конкретного ингредиента.
+/**
+ * Компонент для отображения деталей конкретного ингредиента.
+ */
 export const IngredientDetails: FC = () => {
-  // Получение идентификатора ингредиента из параметров URL.
-  const ingridientId = useParams().id;
+  const { id: ingredientId } = useParams(); // Получаем ID ингредиента из URL
+  const ingredients = useSelector(getIngredientsSelector); // Достаем ингредиенты из Redux-хранилища
 
-  // Получение списка ингредиентов из хранилища.
-  const ingredients = useSelector(getIngredientsSelector);
+  // Ищем нужный ингредиент по ID
+  const ingredientData = ingredients.find(({ _id }) => _id === ingredientId);
 
-  // Поиск данных об ингредиенте по идентификатору.
-  const ingredientData = ingredients.find(
-    (ingredient) => ingredient._id === ingridientId
+  // Если ингредиент не найден, показываем прелоадер
+  return ingredientData ? (
+    <IngredientDetailsUI ingredientData={ingredientData} />
+  ) : (
+    <Preloader />
   );
-
-  // Если данные об ингредиенте не найдены, отображается прелоадер.
-  if (!ingredientData) {
-    return <Preloader />;
-  }
-
-  // Рендер UI-компонента с передачей данных об ингредиенте.
-  return <IngredientDetailsUI ingredientData={ingredientData} />;
 };
