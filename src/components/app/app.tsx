@@ -41,13 +41,13 @@ import { ProtectedRoute } from '../protected-route';
 
 // Импорты экшенов и селекторов Redux.
 import {
-  getIngredientsThunk,
-  getUserStateSelector,
+  fetchIngredientsAsync,
+  selectUserState,
   getUserThunk
 } from '@slices';
 
 // Импорт компонента Preloader для отображения загрузки.
-import { Preloader } from '../ui/preloader';
+//import { Preloader } from '../ui/preloader';
 
 // Импорт провайдера Redux.
 import { Provider } from 'react-redux';
@@ -63,7 +63,7 @@ const App = () => {
   const dispatch = useDispatch();
 
   // Получение статуса загрузки пользователя из хранилища.
-  const userLoading = useSelector(getUserStateSelector).isLoading;
+  //const userLoading = useSelector(selectUserState).isLoading;
 
   // Проверка, если есть фоновое местоположение для модальных окон.
   const backgroundLocation = location.state?.background;
@@ -73,7 +73,7 @@ const App = () => {
     // Запрос данных о пользователе.
     dispatch(getUserThunk());
     // Запрос данных об ингредиентах.
-    dispatch(getIngredientsThunk());
+    dispatch(fetchIngredientsAsync());
   }, [dispatch]);
 
   return (

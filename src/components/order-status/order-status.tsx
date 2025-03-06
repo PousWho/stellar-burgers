@@ -1,30 +1,25 @@
-// Импортируем необходимые типы и компоненты.
 import React, { FC } from 'react';
-import { OrderStatusProps } from './type'; // Типы для пропсов компонента.
-import { OrderStatusUI } from '@ui'; // UI-компонент для отображения статуса заказа.
+import { OrderStatusProps } from './type';
+import { OrderStatusUI } from '@ui';
 
-const statusText: { [key: string]: string } = {
-  pending: 'Готовится', // Текст для статуса "pending".
-  done: 'Выполнен', // Текст для статуса "done".
-  created: 'Создан' // Текст для статуса "created".
+// Объект для соответствия статусов их текстовым представлениям.
+const statusText: Record<string, string> = {
+  pending: 'Готовится', // Заказ в процессе приготовления.
+  done: 'Выполнен', // Заказ завершён.
+  created: 'Создан' // Заказ только что создан.
 };
 
-// Основной компонент для отображения статуса заказа.
-export const OrderStatus: FC<OrderStatusProps> = ({ status }) => {
-  let textStyle = ''; // Переменная для хранения стиля текста в зависимости от статуса.
-
-  // Устанавливаем стиль в зависимости от статуса.
-  switch (status) {
-    case 'pending': // Статус "Готовится".
-      textStyle = '#E52B1A'; // Красный цвет для статуса "Готовится".
-      break;
-    case 'done': // Статус "Выполнен".
-      textStyle = '#00CCCC'; // Голубой цвет для статуса "Выполнен".
-      break;
-    default: // Статус по умолчанию (например, "Создан").
-      textStyle = '#F2F2F3'; // Светлый цвет для статуса "Создан".
-  }
-
-  // Рендерим UI-компонент с переданным текстом и стилем.
-  return <OrderStatusUI textStyle={textStyle} text={statusText[status]} />;
+// Объект для соответствия статусов их цветовым стилям.
+const statusColors: Record<string, string> = {
+  pending: '#E52B1A', // Красный цвет — заказ готовится.
+  done: '#00CCCC', // Голубой цвет — заказ выполнен.
+  created: '#F2F2F3' // Светло-серый — заказ создан.
 };
+
+// Компонент для отображения статуса заказа.
+export const OrderStatus: FC<OrderStatusProps> = ({ status }) => (
+  <OrderStatusUI
+    textStyle={statusColors[status] ?? '#F2F2F3'} // Если статус неизвестен, используем цвет по умолчанию.
+    text={statusText[status] ?? 'Неизвестно'} // Если статус неизвестен, показываем дефолтный текст.
+  />
+);

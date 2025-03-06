@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Preloader } from '../ui/preloader';
 import { IngredientDetailsUI } from '../ui/ingredient-details';
 import { useSelector } from '../../services/store';
-import { getIngredientsSelector } from '@slices';
+import { selectIngredientList } from '@slices';
 import { useParams } from 'react-router-dom';
 
 /**
@@ -10,7 +10,7 @@ import { useParams } from 'react-router-dom';
  */
 export const IngredientDetails: FC = () => {
   const { id: ingredientId } = useParams(); // Получаем ID ингредиента из URL
-  const ingredients = useSelector(getIngredientsSelector); // Достаем ингредиенты из Redux-хранилища
+  const ingredients = useSelector(selectIngredientList); // Достаем ингредиенты из Redux-хранилища
 
   // Ищем нужный ингредиент по ID
   const ingredientData = ingredients.find(({ _id }) => _id === ingredientId);

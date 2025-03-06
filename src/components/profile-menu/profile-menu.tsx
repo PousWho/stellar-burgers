@@ -1,19 +1,17 @@
-// Импортируем необходимые типы и компоненты.
-import { FC } from 'react'; // Функциональный компонент.
-import { useLocation } from 'react-router-dom'; // Хук для получения информации о текущем пути.
-import { ProfileMenuUI } from '@ui'; // UI-компонент для отображения меню профиля.
-import { useDispatch } from '../../services/store'; // Хук для доступа к dispatch.
-import { logoutUserThunk } from '@slices'; // Действие для выхода пользователя.
+import { FC, memo, useCallback } from 'react'; // Импортируем memo и useCallback для оптимизации.
+import { useLocation } from 'react-router-dom';
+import { logoutUserThunk } from '@slices';
+import { useDispatch } from '../../services/store';
+import { ProfileMenuUI } from '@ui';
 
-export const ProfileMenu: FC = () => {
-  const dispatch = useDispatch(); // Получаем dispatch для отправки действий.
-  const { pathname } = useLocation(); // Получаем текущий путь для использования в UI.
+export const ProfileMenu: FC = memo(() => {
+  const dispatch = useDispatch();
+  const { pathname } = useLocation();
 
-  // Функция обработки выхода пользователя.
-  const handleLogout = () => {
-    dispatch(logoutUserThunk()); // Отправляем действие для выхода.
-  };
+  // Мемоизируем функцию выхода, чтобы она не пересоздавалась при каждом ререндере.
+  const handleLogout = useCallback(() => {
+    dispatch(logoutUserThunk());
+  }, [dispatch]);
 
-  // Рендерим UI-компонент меню профиля, передавая текущий путь и функцию выхода.
   return <ProfileMenuUI handleLogout={handleLogout} pathname={pathname} />;
-};
+});

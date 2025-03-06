@@ -4,134 +4,118 @@ import {
   createAsyncThunk,
   nanoid
 } from '@reduxjs/toolkit';
-import { TConstructorIngredient, TOrder, TIngredient } from '@utils-types';
-import { orderBurgerApi } from '@api';
+import { TConstructorIngredient, TOrder, TIngredient } from '@utils-types'; // Импорт типов
+import { orderBurgerApi } from '@api'; // Импорт API для отправки заказа
 
-// Тип состояния для конструктора бургера
-export interface ConstructorState {
-  isLoading: boolean; // Показывает, выполняется ли запрос на сервер
+// Описание состояния конструктора бургера
+interface ConstructorState {
+  isLoading: boolean; // Состояние загрузки (используется при асинхронных запросах)
   constructorItems: {
-    bun: TConstructorIngredient | null; // Хранит выбранную булочку (если есть)
-    ingredients: TConstructorIngredient[]; // Хранит список выбранных ингредиентов
+    bun: TConstructorIngredient | null; // Булочка бургера, может быть пустой
+    ingredients: TConstructorIngredient[]; // Список ингредиентов в бургере
   };
-  orderRequest: boolean; // Указывает, активен ли процесс заказа
-  orderModalData: TOrder | null; // Содержит данные заказа для отображения в модальном окне
-  error: string | null; // Хранит сообщение об ошибке (если есть)
+  orderRequest: boolean; // Запрос на заказ в процессе
+  orderModalData: TOrder | null; // Данные о заказе для модального окна
+  error: string | null; // Ошибка, если она возникла
 }
 
 // Начальное состояние конструктора
 const initialState: ConstructorState = {
-  isLoading: false, // Изначально запросы не выполняются
-  constructorItems: {
-    bun: null, // Булочка не выбрана
-    ingredients: [] // Список ингредиентов пуст
-  },
-  orderRequest: false, // Процесс заказа не активен
-  orderModalData: null, // Нет данных для модального окна
-  error: null // Ошибок нет
+  isLoading: false,
+  constructorItems: { bun: null, ingredients: [] },
+  orderRequest: false,
+  orderModalData: null,
+  error: null
 };
 
-// Асинхронный thunk для отправки заказа на сервер
-export const sendOrderThunk = createAsyncThunk(
+// Асинхронный экшен для отправки заказа в API
+export const submitOrderAsync = createAsyncThunk(
   'constructorbg/sendOrder',
-  (data: string[]) => orderBurgerApi(data) // Вызывает API для отправки данных
+  orderBurgerApi
 );
 
-// Создание слайса с действиями и редьюсерами
+// Слайс для управления состоянием конструктора
 const constructorSlice = createSlice({
-  name: 'constructorbg', // Уникальное имя слайса
-  initialState, // Используем начальное состояние
+  name: 'constructorbg', // Имя слайса
+  initialState, // Начальное состояние
   reducers: {
-    // Добавление ингредиента в конструктор
+    // Экшен для добавления ингредиента (булочка или обычный ингредиент)
     addIngredient: {
       reducer: (state, action: PayloadAction<TConstructorIngredient>) => {
-        if (action.payload.type === 'bun') {
-          state.constructorItems.bun = action.payload; // Если это булочка, заменяем текущую
-        } else {
-          state.constructorItems.ingredients.push(action.payload); // Добавляем обычный ингредиент в список
-        }
+        // Если ингредиент булочка, обновляем булочку в состоянии
+        action.payload.type === 'bun'
+          ? (state.constructorItems.bun = action.payload)
+          : state.constructorItems.ingredients.push(action.payload); // Если не булочка, добавляем в список ингредиентов
       },
+      // Подготовка ингредиента с добавлением уникального ID
       prepare: (ingredient: TIngredient) => ({
-        payload: { ...ingredient, id: nanoid() } // Генерируем уникальный ID для ингредиента
+        payload: { ...ingredient, id: nanoid() }
       })
     },
-    // Удаление ингредиента из списка
+    // Экшен для удаления ингредиента по его ID
     removeIngredient: (state, action: PayloadAction<string>) => {
       state.constructorItems.ingredients =
         state.constructorItems.ingredients.filter(
-          (ingredient) => ingredient.id !== action.payload // Удаляем ингредиент по ID
+          (i) => i.id !== action.payload
         );
     },
-    // Установка состояния процесса заказа
-    setOrderRequest: (state, action: PayloadAction<boolean>) => {
-      state.orderRequest = action.payload; // Обновляем статус запроса
+    // Экшен для обновления состояния запроса заказа
+    setOrderLoading: (state, action: PayloadAction<boolean>) => {
+      state.orderRequest = action.payload;
     },
-    // Сброс данных модального окна
-    setNullOrderModalData: (state) => {
-      state.orderModalData = null; // Очищаем данные модального окна
+    // Экшен для сброса данных о заказе в модальном окне
+    clearOrderModalData: (state) => {
+      state.orderModalData = null;
     },
-    // Перемещение ингредиента вниз в списке
-    moveIngredientDown: (state, action: PayloadAction<number>) => {
+    // Экшен для перемещения ингредиента в списке (вверх/вниз)
+    moveIngredient: (
+      state,
+      action: PayloadAction<{ index: number; direction: 'up' | 'down' }>
+    ) => {
+      const { index, direction } = action.payload;
       const { ingredients } = state.constructorItems;
-      const index = action.payload; // Индекс текущего ингредиента
-      if (index < ingredients.length - 1) {
-        [ingredients[index], ingredients[index + 1]] = [
-          ingredients[index + 1],
+      const swapIndex = direction === 'up' ? index - 1 : index + 1;
+      // Проверка, чтобы индекс не вышел за пределы списка
+      if (swapIndex >= 0 && swapIndex < ingredients.length) {
+        [ingredients[index], ingredients[swapIndex]] = [
+          ingredients[swapIndex],
           ingredients[index]
-        ]; // Меняем местами текущий и следующий ингредиенты
-      }
-    },
-    // Перемещение ингредиента вверх в списке
-    moveIngredientUp: (state, action: PayloadAction<number>) => {
-      const { ingredients } = state.constructorItems;
-      const index = action.payload; // Индекс текущего ингредиента
-      if (index > 0) {
-        [ingredients[index], ingredients[index - 1]] = [
-          ingredients[index - 1],
-          ingredients[index]
-        ]; // Меняем местами текущий и предыдущий ингредиенты
+        ]; // Меняем местами
       }
     }
   },
   extraReducers: (builder) => {
-    // Обработка состояния при отправке заказа
+    // Обработка состояния при разных стадиях асинхронного экшена submitOrderAsync
     builder
-      .addCase(sendOrderThunk.pending, (state) => {
-        state.isLoading = true; // Устанавливаем состояние загрузки
-        state.error = null; // Очищаем сообщение об ошибке
-      })
-      .addCase(sendOrderThunk.rejected, (state, { error }) => {
-        state.isLoading = false; // Останавливаем загрузку
-        state.error = error.message || 'Unknown error'; // Сохраняем сообщение об ошибке
-      })
-      .addCase(sendOrderThunk.fulfilled, (state, { payload }) => {
-        state.isLoading = false; // Завершаем загрузку
+      .addCase(submitOrderAsync.pending, (state) => {
+        state.isLoading = true; // Запрос в процессе
         state.error = null; // Сбрасываем ошибку
-        state.orderRequest = false; // Завершаем процесс заказа
-        state.orderModalData = payload.order; // Сохраняем данные заказа
-        state.constructorItems = {
-          bun: null,
-          ingredients: [] // Очищаем конструктор
-        };
+      })
+      .addCase(submitOrderAsync.rejected, (state, { error }) => {
+        state.isLoading = false; // Запрос завершен
+        state.error = error.message || 'Unknown error'; // Устанавливаем ошибку
+      })
+      .addCase(submitOrderAsync.fulfilled, (state, { payload }) => {
+        state.isLoading = false; // Запрос завершен
+        state.orderRequest = false; // Запрос на заказ завершен
+        state.orderModalData = payload.order; // Устанавливаем данные о заказе в модальном окне
+        state.constructorItems = { bun: null, ingredients: [] }; // Очищаем конструктор
       });
   }
 });
 
-// Селектор для получения данных конструктора
-export const getConstructorSelector = (state: {
+// Селектор для получения состояния конструктора
+export const selectConstructorState = (state: {
   constructorbg: ConstructorState;
-}) => state.constructorbg; // Возвращает данные из состояния конструктора
+}) => state.constructorbg;
 
-// Экспорт начального состояния и экшенов
+// Экспорт начального состояния, экшенов и редьюсера
 export { initialState as constructorInitialState };
 export const {
   addIngredient,
   removeIngredient,
-  setOrderRequest,
-  setNullOrderModalData,
-  moveIngredientDown,
-  moveIngredientUp
+  setOrderLoading,
+  clearOrderModalData,
+  moveIngredient
 } = constructorSlice.actions;
-
-// Экспорт редьюсера по умолчанию
 export default constructorSlice.reducer;

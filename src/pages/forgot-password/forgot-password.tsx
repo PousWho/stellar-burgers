@@ -1,58 +1,45 @@
-// Импорт React и необходимых хуков
-import { FC, useState, SyntheticEvent, useEffect } from 'react';
-
-// Импорт хука навигации из React Router
+import { FC, useState, SyntheticEvent, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// Импорт UI-компонента страницы
 import { ForgotPasswordUI } from '@ui-pages';
-
-// Импорт хуков и экшенов Redux
 import { useSelector, useDispatch } from '../../services/store';
 import {
-  forgotPasswordThunk, // Асинхронный экшен для восстановления пароля
-  getUserErrorSelector, // Селектор для получения ошибки пользователя
-  clearUserError // Экшен для очистки ошибки
+  selectUserError,
+  forgotPasswordThunk,
+  clearError
 } from '@slices';
 
-// Определение функционального компонента ForgotPassword
 export const ForgotPassword: FC = () => {
-  // Локальное состояние для email
   const [email, setEmail] = useState('');
-
-  // Получение ошибки из состояния через селектор
-  const error = useSelector(getUserErrorSelector) as string;
-
-  // Хуки для навигации и dispatch Redux
-  const navigate = useNavigate();
+  const error = useSelector(selectUserError) as string;
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // Хук эффекта: очищаем ошибку при монтировании компонента
+  // Очистка ошибки при монтировании
   useEffect(() => {
-    dispatch(clearUserError());
-  }, [dispatch]); // Добавили зависимость для корректной работы
+    dispatch(clearError());
+    localStorage.removeItem('resetPassword'); // Убираем флаг, если он был
+  }, [dispatch]);
 
-  // Обработчик отправки формы
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault(); // Предотвращаем перезагрузку страницы
+  // Обработчик формы, мемоизированный для оптимизации
+  const handleSubmit = useCallback(
+    async (e: SyntheticEvent) => {
+      e.preventDefault();
+      const result = await dispatch(forgotPasswordThunk({ email }));
 
-    // Диспатчим асинхронный экшен с email
-    dispatch(forgotPasswordThunk({ email })).then((data) => {
-      // Если запрос успешен, перенаправляем пользователя на страницу сброса пароля
-      if (data.payload) {
-        localStorage.setItem('resetPassword', 'true'); // Устанавливаем флаг в localStorage
-        navigate('/reset-password', { replace: true }); // Навигация на страницу сброса
+      if (forgotPasswordThunk.fulfilled.match(result)) {
+        localStorage.setItem('resetPassword', 'true');
+        navigate('/reset-password', { replace: true });
       }
-    });
-  };
+    },
+    [dispatch, email, navigate]
+  );
 
-  // Рендер UI-компонента с передачей необходимых пропсов
   return (
     <ForgotPasswordUI
-      errorText={error} // Текст ошибки для отображения
-      email={email} // Текущее значение email
-      setEmail={setEmail} // Функция для обновления email
-      handleSubmit={handleSubmit} // Обработчик отправки формы
+      email={email}
+      setEmail={setEmail}
+      handleSubmit={handleSubmit}
+      errorText={error}
     />
   );
 };

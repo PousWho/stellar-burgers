@@ -1,1 +1,1 @@
-export { FeedInfo } from './feed-info';
+export { FeedStats } from './feed-info';

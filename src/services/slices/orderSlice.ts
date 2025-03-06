@@ -4,59 +4,67 @@ import { TOrder } from '@utils-types';
 
 // Интерфейс состояния заказа
 export interface OrderState {
-  isLoading: boolean; // Указывает, выполняется ли загрузка
-  order: TOrder | null; // Данные заказа (null, если не загружено)
-  error: string | null; // Сообщение об ошибке, если есть
+  isLoading: boolean; // Флаг загрузки
+  order: TOrder | null; // Данные заказа
+  error: string | null; // Сообщение об ошибке
 }
 
-// Начальное состояние для управления заказами
+// Начальное состояние
 const initialState: OrderState = {
-  isLoading: false, // Загрузка изначально отключена
-  order: null, // Данные заказа отсутствуют
-  error: null // Ошибок нет
+  isLoading: false,
+  order: null,
+  error: null,
 };
 
-// Асинхронное действие для получения данных о заказе по номеру
-export const getOrderThunk = createAsyncThunk(
-  'feed/getOrder', // Имя действия
-  (number: number) => getOrderByNumberApi(number) // Вызов API с передачей номера заказа
+// Асинхронное действие для получения заказа по номеру
+export const getOrderThunk = createAsyncThunk<TOrder, number>(
+  'order/getOrder',
+  async (orderNumber, { rejectWithValue }) => {
+    try {
+      const response = await getOrderByNumberApi(orderNumber);
+      if (!response.orders?.length) throw new Error('Заказ не найден');
+      return response.orders[0];
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
 );
 
-// Создание слайса для управления состоянием заказа
+// Слайс управления заказом
 const orderSlice = createSlice({
-  name: 'order', // Имя слайса
-  initialState, // Начальное состояние
-  reducers: {}, // Редьюсеры отсутствуют, так как используем только асинхронные действия
+  name: 'order',
+  initialState,
+  reducers: {},
   selectors: {
-    // Селектор для получения состояния заказа
-    getOrderSelector: (state) => state
+    selectOrderState: (state) => state,
+    selectOrder: (state) => state.order,
+    selectIsLoading: (state) => state.isLoading,
+    selectError: (state) => state.error,
   },
   extraReducers: (builder) => {
     builder
-      // Обработка состояния при начале загрузки
       .addCase(getOrderThunk.pending, (state) => {
-        state.isLoading = true; // Устанавливаем флаг загрузки
-        state.error = null; // Сбрасываем предыдущие ошибки
+        state.isLoading = true;
+        state.error = null;
       })
-      // Обработка состояния при ошибке загрузки
-      .addCase(getOrderThunk.rejected, (state, { error }) => {
-        state.isLoading = false; // Завершаем загрузку
-        state.error = error.message as string; // Сохраняем сообщение об ошибке
-      })
-      // Обработка состояния при успешной загрузке
       .addCase(getOrderThunk.fulfilled, (state, { payload }) => {
-        state.isLoading = false; // Завершаем загрузку
-        state.error = null; // Сбрасываем ошибки
-        state.order = payload.orders[0]; // Сохраняем первый заказ из ответа
+        state.isLoading = false;
+        state.order = payload;
+      })
+      .addCase(getOrderThunk.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload as string;
       });
-  }
+  },
 });
 
-// Экспорт начального состояния для тестов или других частей приложения
+// Экспорты
+export const {
+  selectOrderState,
+  selectOrder,
+  selectIsLoading,
+  selectError,
+} = orderSlice.selectors;
+
 export { initialState as orderInitialState };
-
-// Экспорт селектора для получения данных заказа в компонентах
-export const { getOrderSelector } = orderSlice.selectors;
-
-// Экспорт редьюсера для добавления в store
 export default orderSlice.reducer;

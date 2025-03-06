@@ -9,11 +9,11 @@ import { BurgerIngredientsUI } from '../ui/burger-ingredients';
 // Хук для получения данных из Redux-хранилища
 import { useSelector } from '../../services/store';
 // Селектор для получения списка ингредиентов
-import { getIngredientsSelector } from '@slices';
+import { selectIngredientList } from '@slices';
 
 // Компонент списка ингредиентов для бургера
 export const BurgerIngredients: FC = () => {
-  const ingredients = useSelector(getIngredientsSelector); // Получение ингредиентов из Redux
+  const ingredients = useSelector(selectIngredientList); // Получение ингредиентов из Redux
 
   // Разделение ингредиентов по категориям
   const buns = ingredients.filter((item) => item.type === 'bun');
@@ -43,13 +43,13 @@ export const BurgerIngredients: FC = () => {
   // Обработчик клика по вкладке (скролл к нужному разделу)
   const onTabClick = (tab: string) => {
     setCurrentTab(tab as TTabMode); // Приводим строку к нужному типу
-  
+
     const refMap: Record<string, React.RefObject<HTMLHeadingElement>> = {
       bun: titleBunRef,
       main: titleMainRef,
-      sauce: titleSaucesRef,
+      sauce: titleSaucesRef
     };
-  
+
     refMap[tab]?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 

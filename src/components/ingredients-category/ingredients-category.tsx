@@ -12,7 +12,7 @@ import { IngredientsCategoryUI } from '../ui/ingredients-category';
 import { useSelector } from '../../services/store';
 
 // Импорт селектора для получения данных о конструкторе бургера.
-import { getConstructorSelector } from '@slices';
+import { selectConstructorState } from '@slices';
 
 /**
  * Компонент для отображения категории ингредиентов с поддержкой передачи ref.
@@ -22,14 +22,16 @@ export const IngredientsCategory = forwardRef<
   TIngredientsCategoryProps // Тип свойств компонента.
 >(({ title, titleRef, ingredients }, ref) => {
   // Получение данных о текущем состоянии конструктора бургера из Redux-хранилища.
-  const { bun, ingredients: constructorIngredients } = useSelector(getConstructorSelector).constructorItems;
+  const { bun, ingredients: items } = useSelector(
+    selectConstructorState
+  ).constructorItems;
 
   // Определение счетчиков для ингредиентов в конструкторе.
   const ingredientsCounters = useMemo(() => {
     const counters: Record<string, number> = {}; // Объект для хранения количества каждого ингредиента.
 
     // Подсчет количества ингредиентов в конструкторе.
-    constructorIngredients.forEach(({ _id }: TIngredient) => {
+    items.forEach(({ _id }: TIngredient) => {
       counters[_id] = (counters[_id] || 0) + 1;
     });
 
@@ -37,7 +39,7 @@ export const IngredientsCategory = forwardRef<
     if (bun) counters[bun._id] = 2;
 
     return counters;
-  }, [bun, constructorIngredients]); // Пересчет происходит только при изменении конструктора.
+  }, [bun, items]); // Пересчет происходит только при изменении конструктора.
 
   // Рендер UI-компонента для категории ингредиентов с передачей необходимых данных.
   return (
