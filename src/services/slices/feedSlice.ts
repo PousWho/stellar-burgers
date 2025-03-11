@@ -24,7 +24,10 @@ const initialState: FeedState = {
 export const getFeedThunk = createAsyncThunk('feed/getFeed', getFeedsApi);
 
 // Асинхронный экшен для получения заказов пользователя
-export const getOrdersThunk = createAsyncThunk('feed/getProfileFeed', getOrdersApi);
+export const getOrdersThunk = createAsyncThunk(
+  'feed/getProfileFeed',
+  getOrdersApi
+);
 
 // Функция для установки состояния загрузки
 const setLoadingState = (state: FeedState) => {

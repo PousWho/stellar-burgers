@@ -13,7 +13,7 @@ interface IngredientsState {
 const initialState: IngredientsState = {
   isLoading: false,
   ingredients: [],
-  error: null,
+  error: null
 };
 
 // Асинхронное действие для получения ингредиентов
@@ -35,7 +35,7 @@ const ingredientsSlice = createSlice({
   reducers: {},
   selectors: {
     selectIngredientsStore: (state) => state,
-    selectIngredientList: (state) => state.ingredients,
+    selectIngredientList: (state) => state.ingredients
   },
   extraReducers: ({ addCase }) => {
     addCase(fetchIngredientsAsync.pending, (state) => {
@@ -50,8 +50,9 @@ const ingredientsSlice = createSlice({
       state.isLoading = false;
       state.error = payload as string;
     });
-  },
+  }
 });
 
-export const { selectIngredientsStore, selectIngredientList } = ingredientsSlice.selectors;
+export const { selectIngredientsStore, selectIngredientList } =
+  ingredientsSlice.selectors;
 export default ingredientsSlice.reducer;

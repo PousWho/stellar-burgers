@@ -27,5 +27,9 @@ export const Feed: FC = () => {
   }, [handleGetFeeds]);
 
   // Если заказов нет, отображаем прелоадер
-  return orders.length ? <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} /> : <Preloader />;
+  return orders.length ? (
+    <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />
+  ) : (
+    <Preloader />
+  );
 };

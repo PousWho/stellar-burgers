@@ -21,7 +21,7 @@
 }
 
 .link_active {
-  color: var(--text-primary-color);
+  color: white;
 }
 
 .link_position_last {

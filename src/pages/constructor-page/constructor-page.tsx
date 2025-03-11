@@ -9,7 +9,7 @@ import { selectIngredientsStore } from '../../services/slices';
 export const ConstructorPage: FC = () => {
   // Получаем состояние загрузки ингредиентов из store
   const { isLoading: isIngredientsLoading } = useSelector(
-    selectIngredientsStore 
+    selectIngredientsStore
   );
 
   // Показываем Preloader, если идёт загрузка ингредиентов

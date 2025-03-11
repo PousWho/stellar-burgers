@@ -13,7 +13,7 @@ export interface OrderState {
 const initialState: OrderState = {
   isLoading: false,
   order: null,
-  error: null,
+  error: null
 };
 
 // Асинхронное действие для получения заказа по номеру
@@ -39,7 +39,7 @@ const orderSlice = createSlice({
     selectOrderState: (state) => state,
     selectOrder: (state) => state.order,
     selectIsLoading: (state) => state.isLoading,
-    selectError: (state) => state.error,
+    selectError: (state) => state.error
   },
   extraReducers: (builder) => {
     builder
@@ -55,16 +55,12 @@ const orderSlice = createSlice({
         state.isLoading = false;
         state.error = payload as string;
       });
-  },
+  }
 });
 
 // Экспорты
-export const {
-  selectOrderState,
-  selectOrder,
-  selectIsLoading,
-  selectError,
-} = orderSlice.selectors;
+export const { selectOrderState, selectOrder, selectIsLoading, selectError } =
+  orderSlice.selectors;
 
 export { initialState as orderInitialState };
 export default orderSlice.reducer;

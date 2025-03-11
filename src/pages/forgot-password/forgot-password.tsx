@@ -2,11 +2,7 @@ import { FC, useState, SyntheticEvent, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ForgotPasswordUI } from '@ui-pages';
 import { useSelector, useDispatch } from '../../services/store';
-import {
-  selectUserError,
-  forgotPasswordThunk,
-  clearError
-} from '@slices';
+import { selectUserError, forgotPasswordThunk, clearError } from '@slices';
 
 export const ForgotPassword: FC = () => {
   const [email, setEmail] = useState('');

@@ -35,16 +35,12 @@ import {
 
 // Импорты общих компонентов.
 import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
-
+import { Center } from '../title-center';
 // Импорт компонента для защиты маршрутов.
 import { ProtectedRoute } from '../protected-route';
 
 // Импорты экшенов и селекторов Redux.
-import {
-  fetchIngredientsAsync,
-  selectUserState,
-  getUserThunk
-} from '@slices';
+import { fetchIngredientsAsync, selectUserState, getUserThunk } from '@slices';
 
 // Импорт компонента Preloader для отображения загрузки.
 //import { Preloader } from '../ui/preloader';
@@ -85,7 +81,14 @@ const App = () => {
         {/* Главная страница конструктора */}
         <Route path='/' element={<ConstructorPage />} />
         {/* Страница с деталями ингредиента */}
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route
+          path='/ingredients/:id'
+          element={
+            <Center title={`Детали ингредиента`}>
+              <IngredientDetails />
+            </Center>
+          }
+        />
         {/* Лента заказов */}
         <Route path='/feed' element={<Feed />} />
         {/* Информация о заказе в ленте */}
