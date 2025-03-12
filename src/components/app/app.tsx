@@ -92,7 +92,11 @@ const App = () => {
         {/* Лента заказов */}
         <Route path='/feed' element={<Feed />} />
         {/* Информация о заказе в ленте */}
-        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='/feed/:number' element={
+          <Center title={`#${location.pathname.match(/\d+/)}`}>
+            <OrderInfo />
+          </Center>
+        } />
         {/* Маршруты для гостей */}
         <Route element={<ProtectedRoute forAuthorized={false} />}>
           <Route path='/login' element={<Login />} />
