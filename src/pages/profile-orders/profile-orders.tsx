@@ -1,24 +1,28 @@
-// Импорт UI-компонента для отображения заказов
-import { ProfileOrdersUI } from '@ui-pages';
-// Импорт типа заказа
-import { TOrder } from '@utils-types';
-// Импорт React-хуков
-import { FC, useEffect } from 'react';
-// Импорт хуков и экшенов из Redux
-import { useSelector, useDispatch } from '../../services/store';
-// Импорт селектора и thunk для работы с заказами
-import { getOrdersSelector, getOrdersThunk } from '@slices';
+// Импорт необходимых модулей и компонентов
+import { ProfileOrdersUI } from '@ui-pages'; // UI-компонент для заказов в профиле
+import { TOrder } from '@utils-types'; // Тип заказов
+import { FC, useEffect, useMemo } from 'react'; // Хуки React и тип компонента
+import { useSelector, useDispatch } from '../../services/store'; // Хуки Redux
+import { selectOrders, getOrdersThunk } from '@slices'; // Селектор и асинхронный экшен для заказов
 
-// Определение функционального компонента ProfileOrders
+/**
+ * Компонент для отображения заказов пользователя в профиле.
+ */
 export const ProfileOrders: FC = () => {
-  const dispatch = useDispatch(); // Инициализация диспетчера Redux
-  const orders: TOrder[] = useSelector(getOrdersSelector); // Получение списка заказов из состояния
+  const dispatch = useDispatch(); // Инициализация dispatch для вызова Redux экшенов
+  const orders: TOrder[] = useSelector(selectOrders); // Получение заказов из Redux
 
-  // Хук для загрузки заказов при монтировании компонента
+  /**
+   * Загружаем заказы при монтировании, если их ещё нет.
+   */
   useEffect(() => {
-    dispatch(getOrdersThunk()); // Запуск thunk для получения заказов
-  }, [dispatch]); // Зависимость - диспетчер Redux
+    if (!orders.length) dispatch(getOrdersThunk()); // Делаем запрос заказов, если список пуст
+  }, [dispatch, orders.length]);
 
-  // Рендер UI-компонента с передачей заказов в пропсы
-  return <ProfileOrdersUI orders={orders} />;
+  /**
+   * Мемоизация списка заказов, чтобы избежать лишних ререндеров при неизменных данных.
+   */
+  const memoizedOrders = useMemo(() => orders, [orders]);
+
+  return <ProfileOrdersUI orders={memoizedOrders} />; // Рендеринг UI-компонента с заказами
 };

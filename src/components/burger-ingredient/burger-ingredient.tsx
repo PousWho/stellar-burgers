@@ -1,42 +1,33 @@
-// Импорт типов FC (Functional Component) и memo для оптимизации рендеринга.
-import { FC, memo } from 'react';
-
-// Импорт хука для работы с текущим местоположением.
+// Импорты React-хуков и необходимых модулей
+import { FC, memo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-
-// Импорт UI-компонента для отображения ингредиента.
-import { BurgerIngredientUI } from '@ui';
-
-// Импорт типа пропсов для компонента.
-import { TBurgerIngredientProps } from './type';
-
-// Импорт хука для отправки экшенов в Redux.
 import { useDispatch } from '../../services/store';
 
-// Импорт экшена для добавления ингредиента в конструктор.
+// Импорт UI-компонента и экшена для добавления ингредиента
+import { BurgerIngredientUI } from '@ui';
 import { addIngredient } from '@slices';
 
-// Компонент для отображения отдельного ингредиента, обернутый в memo для оптимизации.
+// Импорт типов пропсов для компонента
+import { TBurgerIngredientProps } from './type';
+
+// Компонент для отображения ингредиента бургера
 export const BurgerIngredient: FC<TBurgerIngredientProps> = memo(
   ({ ingredient, count }) => {
-    // Получение текущего местоположения для управления навигацией.
-    const location = useLocation();
+    const location = useLocation(); // Получение текущего маршрута (для отображения модальных окон)
+    const dispatch = useDispatch(); // Хук для отправки Redux-экшенов
 
-    // Хук для отправки экшенов в Redux.
-    const dispatch = useDispatch();
+    // Обработчик добавления ингредиента в конструктор бургера
+    // useCallback предотвращает пересоздание функции при каждом рендере
+    const handleAdd = useCallback(() => {
+      dispatch(addIngredient(ingredient)); // Отправка экшена с выбранным ингредиентом
+    }, [dispatch, ingredient]);
 
-    // Обработчик для добавления ингредиента в конструктор.
-    const handleAdd = () => {
-      dispatch(addIngredient(ingredient));
-    };
-
-    // Рендер UI-компонента с передачей данных ингредиента и обработчика.
     return (
       <BurgerIngredientUI
-        ingredient={ingredient} // Данные об ингредиенте.
-        count={count} // Количество ингредиентов (например, если уже добавлено несколько).
-        locationState={{ background: location }} // Состояние местоположения для модальных окон.
-        handleAdd={handleAdd} // Обработчик добавления ингредиента.
+        ingredient={ingredient} // Данные об ингредиенте (название, цена, изображение и т.д.)
+        count={count} // Количество добавленных ингредиентов данного типа
+        locationState={{ background: location }} // Используется для открытия модального окна поверх текущей страницы
+        handleAdd={handleAdd} // Функция добавления ингредиента
       />
     );
   }

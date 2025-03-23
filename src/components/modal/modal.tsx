@@ -1,4 +1,4 @@
-// Импорт типа FC (Functional Component), memo для мемоизации, хука useEffect и useState.
+// Импорт типа FC (Functional Component), memo для мемоизации, а также хуков useEffect и useState.
 import { FC, memo, useEffect, useState } from 'react';
 
 // Импорт ReactDOM для рендеринга компонента в портал (внешний контейнер).
@@ -14,47 +14,40 @@ import { ModalUI } from '@ui';
 import { useLocation } from 'react-router-dom';
 
 // Получение корневого элемента для модальных окон из DOM.
-const modalRoot = document.getElementById('modals');
+const root = document.getElementById('modals') as HTMLDivElement;
 
 // Компонент для отображения модального окна с поддержкой мемоизации.
 export const Modal: FC<TModalProps> = memo(({ title, onClose, children }) => {
-  // Получение текущего местоположения (путь) из URL.
-  const location = useLocation();
+  // Получение текущего пути из URL.
+  const { pathname } = useLocation();
 
   // Состояние для определения стиля заголовка в модальном окне.
-  const [titleStyle, setTitleStyle] = useState('text_type_main-large');
+  const [style, setTitleStyle] = useState('text_type_main-large');
 
   // Эффект для изменения стиля заголовка в зависимости от пути.
   useEffect(() => {
-    // Если путь содержит 'feed' или 'profile', меняем стиль заголовка.
-    if (/feed|profile/i.test(location.pathname)) {
-      setTitleStyle('text_type_digits-default');
-    }
-  });
+    setTitleStyle(
+      /feed|profile/i.test(pathname)
+        ? 'text_type_digits-default'
+        : 'text_type_main-large'
+    );
+  }, [pathname]); // Добавил зависимость, чтобы эффект срабатывал при изменении пути.
 
-  // Эффект для обработки нажатия клавиши Escape для закрытия модального окна.
+  // Эффект для обработки нажатия клавиши Escape.
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose(); // Закрытие модального окна при нажатии на Escape.
-      }
-    };
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
 
-    // Добавление слушателя события для клавиши Escape.
     document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
-    // Очистка слушателя при размонтировании компонента.
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [onClose]); // Эффект зависит от функции onClose.
-
-  // Рендеринг модального окна через портал (вывод в отдельный контейнер).
-  return ReactDOM.createPortal(
-    // Рендерим UI компонента модального окна с переданными пропсами.
-    <ModalUI title={title} onClose={onClose} titleStyle={titleStyle}>
-      {children} {/* Контент модального окна. */}
-    </ModalUI>,
-    modalRoot as HTMLDivElement // Отправляем в корневой элемент для модальных окон.
-  );
+  // Рендер модального окна через портал.
+  return root
+    ? ReactDOM.createPortal(
+        <ModalUI title={title} onClose={onClose} titleStyle={style}>
+          {children}
+        </ModalUI>,
+        root
+      )
+    : null; //проверка, если modalRoot по какой-то причине null.
 });

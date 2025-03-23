@@ -5,7 +5,6 @@ import {
   getUserApi,
   updateUserApi,
   logoutApi,
-  refreshToken,
   forgotPasswordApi,
   resetPasswordApi
 } from '@api';
@@ -13,216 +12,237 @@ import type { TRegisterData, TLoginData } from '@api';
 import { TUser } from '@utils-types';
 import { deleteCookie, setCookie } from '../../utils/cookie';
 
-// Интерфейс состояния пользователя
-export interface UserState {
-  isLoading: boolean; // Флаг загрузки
-  user: TUser | null; // Данные пользователя
-  isAuthorized: boolean; // Флаг авторизации
-  error: string | null; // Сообщение об ошибке
+/**
+ * Интерфейс состояния пользователя в Redux store.
+ */
+interface UserState {
+  isLoading: boolean; // Флаг для отображения состояния загрузки (например, показывать спиннер).
+  user: TUser | null; // Объект с данными пользователя или null, если пользователь не авторизован.
+  isAuthorized: boolean; // Флаг, показывающий авторизован ли пользователь.
+  error: string | null; // Сообщение об ошибке, если что-то пошло не так.
 }
 
-// Начальное состояние
+/**
+ * Начальное состояние пользователя.
+ */
 const initialState: UserState = {
-  isLoading: false, // По умолчанию загрузка не идёт
-  user: null, // Пользователь не определён
-  isAuthorized: false, // Пользователь не авторизован
-  error: null // Ошибок нет
+  isLoading: false, // Изначально ничего не загружается.
+  user: null, // Нет данных пользователя при инициализации.
+  isAuthorized: false, // Пользователь изначально не авторизован.
+  error: null // Ошибок нет.
 };
 
-// Асинхронные действия для работы с API
+/**
+ * Универсальный обработчик для `pending` состояния.
+ * Используется, когда запрос начат, но ещё не завершён.
+ */
+const setLoadingState = (state: UserState) => {
+  state.isLoading = true; // Включаем индикатор загрузки.
+  state.error = null; // Сбрасываем старые ошибки.
+};
+
+/**
+ * Универсальный обработчик для `rejected` состояния.
+ * Используется, если запрос завершился с ошибкой.
+ */
+const setErrorState = (
+  state: UserState,
+  { error }: { error: { message?: string } }
+) => {
+  state.isLoading = false; // Выключаем индикатор загрузки.
+  state.error = error.message ?? 'Произошла ошибка'; // Сохраняем сообщение об ошибке или дефолтное.
+};
+
+/**
+ * Асинхронные экшены (thunks) для взаимодействия с API.
+ * Они автоматически создают три состояния: pending, fulfilled, rejected.
+ */
+// Регистрация пользователя
+export const registerUserThunk = createAsyncThunk(
+  'user/register',
+  async (registerData: TRegisterData) => await registerUserApi(registerData)
+);
 
 // Логин пользователя
 export const loginUserThunk = createAsyncThunk(
   'user/login',
-  (loginData: TLoginData) => loginUserApi(loginData)
-);
-
-// Регистрация пользователя
-export const registerUserThunk = createAsyncThunk(
-  'user/register',
-  (registerData: TRegisterData) => registerUserApi(registerData)
+  async (loginData: TLoginData) => await loginUserApi(loginData)
 );
 
 // Логаут пользователя
-export const logoutUserThunk = createAsyncThunk('user/logout', logoutApi);
+export const logoutUserThunk = createAsyncThunk(
+  'user/logout',
+  async () => await logoutApi()
+);
 
 // Обновление данных пользователя
 export const updateUserThunk = createAsyncThunk(
   'user/update',
-  (user: Partial<TRegisterData>) => updateUserApi(user)
+  async (user: Partial<TRegisterData>) => await updateUserApi(user)
 );
 
-// Запрос на восстановление пароля
+// Запрос для восстановления пароля
 export const forgotPasswordThunk = createAsyncThunk(
   'user/forgotPassword',
-  (data: { email: string }) => forgotPasswordApi(data)
+  async (data: { email: string }) => await forgotPasswordApi(data)
 );
 
-// Сброс пароля
+// Сброс пароля по токену
 export const resetPasswordThunk = createAsyncThunk(
   'user/resetPassword',
-  (data: { password: string; token: string }) => resetPasswordApi(data)
+  async (data: { password: string; token: string }) =>
+    await resetPasswordApi(data)
 );
 
-// Получение текущего пользователя
-export const getUserThunk = createAsyncThunk('user/get', getUserApi);
+// Получение текущего пользователя (например, для проверки авторизации после обновления страницы)
+export const getUserThunk = createAsyncThunk(
+  'user/get',
+  async () => await getUserApi()
+);
 
-// Создание слайса
+/**
+ * Создание слайса состояния пользователя.
+ * Здесь определяются reducers, selectors и обработка асинхронных экшенов (extraReducers).
+ */
 export const userSlice = createSlice({
-  name: 'user', // Имя слайса
-  initialState, // Начальное состояние
+  name: 'user',
+  initialState,
   reducers: {
-    // Очистка ошибок
-    clearUserError: (state) => {
-      state.error = null; // Сбрасываем ошибку
+    /**
+     * Очищает сообщение об ошибке.
+     */
+    clearError: (state) => {
+      state.error = null;
     }
   },
   selectors: {
-    // Селектор для получения состояния пользователя
-    getUserStateSelector: (state) => state,
-    // Селектор для получения данных пользователя
-    getUserSelector: (state) => state.user,
-    // Селектор для проверки авторизации
-    isAuthorizedSelector: (state) => state.isAuthorized,
-    // Селектор для получения ошибки
-    getUserErrorSelector: (state) => state.error
+    /**
+     * Селектор для получения всего состояния пользователя.
+     */
+    selectUserState: (state) => state,
+
+    /**
+     * Селектор для получения данных пользователя.
+     */
+    selectUser: (state) => state.user,
+
+    /**
+     * Селектор для проверки, авторизован ли пользователь.
+     */
+    selectIsAuthorized: (state) => state.isAuthorized,
+
+    /**
+     * Селектор для получения сообщения об ошибке.
+     */
+    selectUserError: (state) => state.error
   },
   extraReducers: (builder) => {
-    // Обработка логина
     builder
-      .addCase(loginUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(loginUserThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
+      /**
+       * Обработка pending состояния для всех асинхронных экшенов.
+       * Это позволяет показывать индикатор загрузки.
+       */
+      .addCase(loginUserThunk.pending, setLoadingState)
+      .addCase(registerUserThunk.pending, setLoadingState)
+      .addCase(logoutUserThunk.pending, setLoadingState)
+      .addCase(updateUserThunk.pending, setLoadingState)
+      .addCase(forgotPasswordThunk.pending, setLoadingState)
+      .addCase(resetPasswordThunk.pending, setLoadingState)
+      .addCase(getUserThunk.pending, setLoadingState)
+
+      /**
+       * Обработка rejected состояния для всех асинхронных экшенов.
+       * Это позволяет сохранять сообщение об ошибке.
+       */
+      .addCase(loginUserThunk.rejected, setErrorState)
+      .addCase(registerUserThunk.rejected, setErrorState)
+      .addCase(logoutUserThunk.rejected, setErrorState)
+      .addCase(updateUserThunk.rejected, setErrorState)
+      .addCase(forgotPasswordThunk.rejected, setErrorState)
+      .addCase(resetPasswordThunk.rejected, setErrorState)
+      .addCase(getUserThunk.rejected, setErrorState)
+
+      /**
+       * Успешный логин:
+       * - Сохраняет данные пользователя.
+       * - Ставит флаг авторизации в true.
+       * - Сохраняет токены в cookies и localStorage.
+       */
       .addCase(loginUserThunk.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.error = null;
         state.user = payload.user;
         state.isAuthorized = true;
-        setCookie('accessToken', payload.accessToken); // Устанавливаем accessToken
-        localStorage.setItem('refreshToken', payload.refreshToken); // Сохраняем refreshToken
-      });
+        setCookie('accessToken', payload.accessToken); // Сохраняем accessToken в cookies.
+        localStorage.setItem('refreshToken', payload.refreshToken); // Сохраняем refreshToken в localStorage.
+      })
 
-    // Обработка регистрации
-    builder
-      .addCase(registerUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(registerUserThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
+      /**
+       * Успешная регистрация:
+       * Работает аналогично логину – авторизует пользователя после регистрации.
+       */
       .addCase(registerUserThunk.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.error = null;
         state.user = payload.user;
         state.isAuthorized = true;
         setCookie('accessToken', payload.accessToken);
         localStorage.setItem('refreshToken', payload.refreshToken);
-      });
+      })
 
-    // Обработка логаута
-    builder
-      .addCase(logoutUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(logoutUserThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
-      .addCase(logoutUserThunk.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-        state.user = null;
-        state.isAuthorized = false;
-        deleteCookie('accessToken');
-        localStorage.removeItem('refreshToken');
-      });
-
-    // Обновление пользователя
-    builder
-      .addCase(updateUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(updateUserThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
+      /**
+       * Успешное обновление данных пользователя.
+       */
       .addCase(updateUserThunk.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.error = null;
-        state.user = payload.user;
-      });
+        state.user = payload.user; // Обновляем данные пользователя.
+      })
 
-    // Забыл пароль
-    builder
-      .addCase(forgotPasswordThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(forgotPasswordThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
-      .addCase(forgotPasswordThunk.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-      });
-
-    // Сброс пароля
-    builder
-      .addCase(resetPasswordThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(resetPasswordThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
-      .addCase(resetPasswordThunk.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-      });
-
-    // Получение пользователя
-    builder
-      .addCase(getUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(getUserThunk.rejected, (state, { error }) => {
-        state.isLoading = false;
-        state.error = error.message as string;
-      })
+      /**
+       * Успешное получение пользователя:
+       * Используется для восстановления состояния после перезагрузки страницы.
+       */
       .addCase(getUserThunk.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.error = null;
         state.user = payload.user;
-        state.isAuthorized = true;
+        state.isAuthorized = true; // Если пользователь получен, значит он авторизован.
+      })
+
+      /**
+       * Успешный логаут:
+       * - Очищает данные пользователя.
+       * - Снимает флаг авторизации.
+       * - Удаляет токены из cookies и localStorage.
+       */
+      .addCase(logoutUserThunk.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthorized = false;
+        deleteCookie('accessToken'); // Удаляем accessToken.
+        localStorage.removeItem('refreshToken'); // Удаляем refreshToken.
       });
   }
 });
 
-// Экспорт начального состояния
+/**
+ * Экспорт начального состояния (например, для сброса в тестах).
+ */
 export { initialState as userInitialState };
 
-// Экспорт действий
-export const { clearUserError } = userSlice.actions;
+/**
+ * Экспорт экшенов.
+ */
+export const { clearError } = userSlice.actions;
 
-// Экспорт селекторов
+/**
+ * Экспорт селекторов для доступа к данным в компонентах.
+ */
 export const {
-  getUserStateSelector,
-  getUserSelector,
-  isAuthorizedSelector,
-  getUserErrorSelector
+  selectUserState,
+  selectUser,
+  selectIsAuthorized,
+  selectUserError
 } = userSlice.selectors;
 
-// Экспорт редьюсера
+/**
+ * Экспорт редьюсера для подключения в store.
+ */
 export default userSlice.reducer;

@@ -1,29 +1,19 @@
-// Импортируем необходимые компоненты и хуки.
-import { Navigate, Outlet, useLocation } from 'react-router-dom'; // Navigate для перенаправлений, Outlet для вложенных маршрутов.
-import { useSelector } from '../../services/store'; // Хук для получения состояния из store.
-import { isAuthorizedSelector } from '@slices'; // Селектор для получения информации о авторизации пользователя.
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useSelector } from '../../services/store';
+import { selectIsAuthorized } from '@slices';
 
 type ProtectedRouteProps = {
-  forAuthorized: boolean; // Пропс для указания, требуется ли авторизация.
+  forAuthorized: boolean; // Требуется ли авторизация для доступа к маршруту.
 };
 
-export const ProtectedRoute = ({
-  forAuthorized = false
-}: ProtectedRouteProps) => {
-  const location = useLocation(); // Хук для получения текущего маршрута.
-  const isAuthorized = useSelector(isAuthorizedSelector); // Проверяем, авторизован ли пользователь.
-  const from = location.state?.from || '/'; // Если был редирект с другого маршрута, сохраняем его, иначе возвращаем на главную.
+export const ProtectedRoute = ({ forAuthorized }: ProtectedRouteProps) => {
+  const location = useLocation();
+  const isAuthorized = useSelector(selectIsAuthorized);
+  const from = location.state?.from ?? '/';
 
-  // Если доступ разрешен только неавторизованным пользователям, но пользователь авторизован, перенаправляем его на предыдущую страницу.
-  if (!forAuthorized && isAuthorized) {
-    return <Navigate to={from} />; // Редирект на исходный путь.
-  }
+  if (isAuthorized && !forAuthorized) return <Navigate to={from} />; // Если залогинен, но маршрут не для авторизованных – редирект.
+  if (!isAuthorized && forAuthorized)
+    return <Navigate to='/login' state={{ from: location }} />; // Если не залогинен, но маршрут для авторизованных – редирект на логин.
 
-  // Если доступ разрешен только авторизованным пользователям, но пользователь не авторизован, перенаправляем на страницу логина.
-  if (forAuthorized && !isAuthorized) {
-    return <Navigate to='/login' state={{ from: location }} />; // Редирект на страницу логина с сохранением исходного пути.
-  }
-
-  // Если все проверки прошли, рендерим вложенные маршруты.
-  return <Outlet />;
+  return <Outlet />; // В остальных случаях просто рендерим вложенные роуты.
 };

@@ -1,53 +1,46 @@
-// Импорт необходимых React-хуков и типов
-import { FC, SyntheticEvent, useState, useEffect } from 'react';
-
-// Импорт UI-компонента страницы логина
-import { LoginUI } from '@ui-pages';
-
-// Импорт хука навигации из React Router
+import { FC, SyntheticEvent, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// Импорт хуков и экшенов Redux
+import { LoginUI } from '@ui-pages';
 import { useDispatch, useSelector } from '../../services/store';
-import { loginUserThunk, clearUserError } from '@slices';
+import { loginUserThunk, clearError } from '@slices';
 
-// Определение функционального компонента Login
 export const Login: FC = () => {
-  const dispatch = useDispatch(); // Инициализация диспетчера Redux
-  const navigate = useNavigate(); // Инициализация навигации React Router
-  const error = useSelector((state) => state.user.error); // Получение ошибки из состояния пользователя
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const error = useSelector((state) => state.user.error);
 
   // Локальное состояние для email и пароля
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Хук эффекта: очищаем ошибку при монтировании компонента
+  // Очистка ошибки при монтировании
   useEffect(() => {
-    dispatch(clearUserError());
-  }, [dispatch]); // Добавили зависимость для корректной работы
+    dispatch(clearError());
+  }, [dispatch]);
 
-  // Обработчик отправки формы
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault(); // Предотвращаем перезагрузку страницы
+  // Обработчик отправки формы (мемоизирован)
+  const handleSubmit = useCallback(
+    async (e: SyntheticEvent) => {
+      e.preventDefault();
+      const result = await dispatch(loginUserThunk({ email, password }));
 
-    // Диспатчим асинхронный экшен с email и паролем
-    dispatch(loginUserThunk({ email, password })).then((data) => {
-      // Если логин успешен, перенаправляем пользователя на главную страницу
-      if (data.payload) {
+      if (loginUserThunk.fulfilled.match(result)) {
+        setEmail('');
+        setPassword('');
         navigate('/', { replace: true });
       }
-    });
-  };
+    },
+    [dispatch, email, password, navigate]
+  );
 
-  // Рендер UI-компонента с передачей необходимых пропсов
   return (
     <LoginUI
-      errorText={error?.toString()} // Преобразование ошибки в строку для отображения
-      email={email} // Текущее значение email
-      setEmail={setEmail} // Функция для обновления email
-      password={password} // Текущее значение пароля
-      setPassword={setPassword} // Функция для обновления пароля
-      handleSubmit={handleSubmit} // Обработчик отправки формы
+      email={email}
+      setEmail={setEmail}
+      password={password}
+      setPassword={setPassword}
+      handleSubmit={handleSubmit}
+      errorText={error?.toString() || ''}
     />
   );
 };

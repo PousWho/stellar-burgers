@@ -1,97 +1,64 @@
-// Импорт хука для управления навигацией.
 import { useNavigate } from 'react-router-dom';
-
-// Импорт UI-компонента для конструктора бургера.
 import { BurgerConstructorUI } from '@ui';
-
-// Импорты хуков и утилит из Redux-хранилища.
 import { useDispatch, useSelector } from '../../services/store';
-
-// Импорты React-хуков и типизации FC (Functional Component).
-import { FC, useMemo } from 'react';
-
-// Импорт типа для ингредиента конструктора.
-import { TConstructorIngredient } from '@utils-types';
-
-// Импорты экшенов и селекторов Redux.
+import { useMemo } from 'react';
 import {
-  setOrderRequest,
-  sendOrderThunk,
-  setNullOrderModalData,
-  isAuthorizedSelector,
-  getConstructorSelector
+  setOrderLoading,
+  submitOrderAsync,
+  clearOrderModalData,
+  selectIsAuthorized,
+  selectConstructorState
 } from '@slices';
 
 // Компонент конструктора бургера.
-export const BurgerConstructor: FC = () => {
-  // Хук для навигации по маршрутам.
+export const BurgerConstructor = () => {
   const navigate = useNavigate();
-
-  // Хук для отправки экшенов в Redux.
   const dispatch = useDispatch();
 
-  // Получение данных конструктора и статусов из хранилища через селектор.
+  // Данные конструктора и статус авторизации.
   const { constructorItems, orderRequest, orderModalData } = useSelector(
-    getConstructorSelector
+    selectConstructorState
   );
-  const isAuthorized = useSelector(isAuthorizedSelector);
+  const isAuthorized = useSelector(selectIsAuthorized);
 
-  // Расчет итоговой стоимости заказа с использованием useMemo для оптимизации.
-  const price = useMemo(() => {
-    // Цена булки (удваивается, так как она используется сверху и снизу).
-    const bunPrice = constructorItems.bun ? constructorItems.bun.price * 2 : 0;
+  // Расчет итоговой стоимости заказа.
+  const price = useMemo(
+    () =>
+      (constructorItems.bun?.price ?? 0) * 2 +
+      constructorItems.ingredients.reduce((sum, { price }) => sum + price, 0),
+    [constructorItems]
+  );
 
-    // Сумма цен всех ингредиентов.
-    const ingredientsPrice = constructorItems.ingredients.reduce(
-      (total, item: TConstructorIngredient) => total + item.price,
-      0
+  // Обработчик оформления заказа.
+  const handleOrder = () => {
+    if (!constructorItems.bun) return; // Без булки нельзя оформить заказ.
+    if (!isAuthorized) return navigate('/login'); // Если не авторизован — перенаправление на логин.
+
+    dispatch(setOrderLoading(true));
+    dispatch(
+      submitOrderAsync([
+        constructorItems.bun._id,
+        ...constructorItems.ingredients.map(({ _id }) => _id),
+        constructorItems.bun._id
+      ])
     );
-
-    // Общая стоимость.
-    return bunPrice + ingredientsPrice;
-  }, [constructorItems]);
-
-  // Обработчик нажатия на кнопку заказа.
-  const handleOrderClick = () => {
-    // Если булка не выбрана, ничего не делаем.
-    if (!constructorItems.bun) return;
-
-    // Если пользователь не авторизован, перенаправляем на страницу логина.
-    if (!isAuthorized) {
-      navigate('/login');
-    } else {
-      // Устанавливаем статус запроса заказа.
-      dispatch(setOrderRequest(true));
-
-      // Получаем ID булки и ингредиентов.
-      const bunId = constructorItems.bun._id;
-      const ingredientsIds = constructorItems.ingredients.map(
-        (item) => item._id
-      );
-
-      // Отправляем заказ, передавая ID булки дважды (в начале и в конце).
-      dispatch(sendOrderThunk([bunId, ...ingredientsIds, bunId]));
-    }
   };
 
   // Обработчик закрытия модального окна заказа.
-  const handleCloseOrderModal = () => {
-    // Сбрасываем статус запроса заказа.
-    dispatch(setOrderRequest(false));
-
-    // Очищаем данные модального окна.
-    dispatch(setNullOrderModalData());
+  const handleCloseModal = () => {
+    dispatch(setOrderLoading(false));
+    dispatch(clearOrderModalData());
   };
 
-  // Рендер UI-компонента с передачей необходимых данных и обработчиков.
+  // Рендер UI-компонента с передачей данных и обработчиков.
   return (
     <BurgerConstructorUI
-      price={price} // Итоговая стоимость заказа.
-      orderRequest={orderRequest} // Статус запроса заказа.
-      constructorItems={constructorItems} // Ингредиенты конструктора.
-      orderModalData={orderModalData} // Данные для модального окна заказа.
-      onOrderClick={handleOrderClick} // Обработчик нажатия на кнопку заказа.
-      closeOrderModal={handleCloseOrderModal} // Обработчик закрытия модального окна.
+      price={price}
+      orderRequest={orderRequest}
+      constructorItems={constructorItems}
+      orderModalData={orderModalData}
+      onOrderClick={handleOrder}
+      closeOrderModal={handleCloseModal}
     />
   );
 };

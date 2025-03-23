@@ -34,20 +34,16 @@ import {
 } from '@pages';
 
 // Импорты общих компонентов.
-import { HeaderApp, Modal, OrderInfo, IngredientDetails } from '@components';
-
+import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
+import { Center } from '../title-center';
 // Импорт компонента для защиты маршрутов.
 import { ProtectedRoute } from '../protected-route';
 
 // Импорты экшенов и селекторов Redux.
-import {
-  getIngredientsThunk,
-  getUserStateSelector,
-  getUserThunk
-} from '@slices';
+import { fetchIngredientsAsync, selectUserState, getUserThunk } from '@slices';
 
 // Импорт компонента Preloader для отображения загрузки.
-import { Preloader } from '../ui/preloader';
+//import { Preloader } from '../ui/preloader';
 
 // Импорт провайдера Redux.
 import { Provider } from 'react-redux';
@@ -63,7 +59,7 @@ const App = () => {
   const dispatch = useDispatch();
 
   // Получение статуса загрузки пользователя из хранилища.
-  const userLoading = useSelector(getUserStateSelector).isLoading;
+  //const userLoading = useSelector(selectUserState).isLoading;
 
   // Проверка, если есть фоновое местоположение для модальных окон.
   const backgroundLocation = location.state?.background;
@@ -73,23 +69,37 @@ const App = () => {
     // Запрос данных о пользователе.
     dispatch(getUserThunk());
     // Запрос данных об ингредиентах.
-    dispatch(getIngredientsThunk());
+    dispatch(fetchIngredientsAsync());
   }, [dispatch]);
 
   return (
     <div className={styles.app}>
       {/* Хедер приложения */}
-      <HeaderApp />
+      <AppHeader />
       {/* Определение маршрутов */}
       <Routes location={backgroundLocation || location}>
         {/* Главная страница конструктора */}
         <Route path='/' element={<ConstructorPage />} />
         {/* Страница с деталями ингредиента */}
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route
+          path='/ingredients/:id'
+          element={
+            <Center title={`Детали ингредиента`}>
+              <IngredientDetails />
+            </Center>
+          }
+        />
         {/* Лента заказов */}
         <Route path='/feed' element={<Feed />} />
         {/* Информация о заказе в ленте */}
-        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route
+          path='/feed/:number'
+          element={
+            <Center title={`#${location.pathname.match(/\d+/)}`}>
+              <OrderInfo />
+            </Center>
+          }
+        />
         {/* Маршруты для гостей */}
         <Route element={<ProtectedRoute forAuthorized={false} />}>
           <Route path='/login' element={<Login />} />

@@ -1,52 +1,28 @@
-// Импорт React-хуков, типов FC (Functional Component) и ReactElement.
-import { FC, ReactElement, memo, useEffect } from 'react';
+import { FC, memo } from 'react'; // Импорт функционального компонента и мемоизации
+import { BurgerConstructorElementUI } from '@ui'; // Импорт компонента UI для отображения элемента конструктора бургера
+import { BurgerConstructorElementProps } from './type'; // Типы для пропсов компонента
+import { useDispatch } from '../../services/store'; // Хук для получения dispatch функции из хранилища
+import { removeIngredient, moveIngredient } from '@slices'; // Импорт экшенов для удаления и перемещения ингредиентов
 
-// Импорт UI-компонента для элемента конструктора бургера.
-import { BurgerConstructorElementUI } from '@ui';
-
-// Импорт типа пропсов для компонента.
-import { BurgerConstructorElementProps } from './type';
-
-// Импорт хука для отправки экшенов в Redux.
-import { useDispatch } from '../../services/store';
-
-// Импорты экшенов для управления ингредиентами конструктора.
-import {
-  removeIngredient,
-  moveIngredientDown,
-  moveIngredientUp
-} from '@slices';
-
-// Компонент элемента конструктора бургера, обернутый в memo для оптимизации рендеринга.
+// Компонент BurgerConstructorElement для отображения одного ингредиента конструктора
 export const BurgerConstructorElement: FC<BurgerConstructorElementProps> = memo(
+  // Мемоизация компонента, чтобы избежать лишних перерендеров, если пропсы не изменились
   ({ ingredient, index, totalItems }) => {
-    // Хук для отправки экшенов в Redux.
-    const dispatch = useDispatch();
+    const dispatch = useDispatch(); // Получаем dispatch для отправки экшенов
 
-    // Обработчик для перемещения ингредиента вниз.
-    const handleMoveDown = () => {
-      dispatch(moveIngredientDown(index));
-    };
-
-    // Обработчик для перемещения ингредиента вверх.
-    const handleMoveUp = () => {
-      dispatch(moveIngredientUp(index));
-    };
-
-    // Обработчик для удаления ингредиента.
-    const handleClose = () => {
-      dispatch(removeIngredient(ingredient.id));
-    };
-
-    // Рендер UI-компонента с передачей всех необходимых данных и обработчиков.
     return (
+      // UI компонент для отображения ингредиента конструктора
       <BurgerConstructorElementUI
-        ingredient={ingredient} // Данные об ингредиенте.
-        index={index} // Индекс текущего ингредиента.
-        totalItems={totalItems} // Общее количество ингредиентов.
-        handleMoveUp={handleMoveUp} // Обработчик перемещения вверх.
-        handleMoveDown={handleMoveDown} // Обработчик перемещения вниз.
-        handleClose={handleClose} // Обработчик удаления ингредиента.
+        ingredient={ingredient} // Передаем информацию об ингредиенте
+        index={index} // Передаем индекс ингредиента в списке
+        totalItems={totalItems} // Общее количество ингредиентов (для отображения)
+        handleMoveUp={() =>
+          dispatch(moveIngredient({ index, direction: 'up' }))
+        } // Функция для перемещения вверх
+        handleMoveDown={() =>
+          dispatch(moveIngredient({ index, direction: 'down' }))
+        } // Функция для перемещения вниз
+        handleClose={() => dispatch(removeIngredient(ingredient.id))} // Функция для удаления ингредиента по ID
       />
     );
   }

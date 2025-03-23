@@ -1,31 +1,35 @@
-// Импорт необходимых компонентов и утилит
-import { Preloader } from '@ui'; // Компонент отображения загрузки
-import { FeedUI } from '@ui-pages'; // Основной UI-компонент ленты заказов
-import { TOrder } from '@utils-types'; // Тип для заказа
-import { FC, useEffect } from 'react'; // React-типы и хук эффекта
+// Импорты компонентов и утилит
+import { Preloader } from '@ui'; // Прелоадер для отображения загрузки
+import { FeedUI } from '@ui-pages'; // UI-компонент ленты заказов
+import { TOrder } from '@utils-types'; // Типизация заказов
+import { FC, useEffect, useCallback } from 'react'; // React хуки и типизация компонента
 import { useDispatch, useSelector } from '../../services/store'; // Хуки для работы с Redux
-import { getFeedThunk, getOrdersSelector } from '@slices'; // Асинхронный экшен и селектор заказов
+import { getFeedThunk, selectOrders } from '@slices'; // Асинхронное действие и селектор заказов
 
-// Определение функционального компонента Feed
+/**
+ * Компонент для отображения ленты заказов.
+ */
 export const Feed: FC = () => {
-  const dispatch = useDispatch(); // Инициализация диспетчера Redux
-  const orders: TOrder[] = useSelector(getOrdersSelector); // Получение массива заказов из Redux
+  const dispatch = useDispatch(); // Хук для вызова экшенов Redux
+  const orders: TOrder[] = useSelector(selectOrders); // Получение списка заказов из Redux
 
-  // Функция для запуска получения данных ленты
-  const handleGetFeeds = () => {
-    dispatch(getFeedThunk()); // Диспатчим асинхронный экшен
-  };
+  /**
+   * Мемоизированная функция для получения заказов.
+   * Предотвращает создание новой функции при каждом рендере.
+   */
+  const handleGetFeeds = useCallback(() => {
+    dispatch(getFeedThunk()); // Запрос заказов через Redux
+  }, [dispatch]);
 
-  // Хук эффекта: выполняется при монтировании компонента
+  // Загружаем заказы при первом монтировании компонента
   useEffect(() => {
-    handleGetFeeds(); // Получение данных при первом рендере
-  }, [dispatch]); // Зависимость — dispatch (гарантия корректной работы)
+    handleGetFeeds();
+  }, [handleGetFeeds]);
 
-  // Если заказы ещё не загружены, показываем прелоадер
-  if (!orders.length) {
-    return <Preloader />;
-  }
-
-  // Отображаем основной UI с заказами и функцией обновления
-  return <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />;
+  // Если заказов нет, отображаем прелоадер
+  return orders.length ? (
+    <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />
+  ) : (
+    <Preloader />
+  );
 };

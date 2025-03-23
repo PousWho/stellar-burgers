@@ -1,58 +1,49 @@
-// Импорт хуков и компонентов
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ResetPasswordUI } from '@ui-pages'; // UI-компонент для сброса пароля
-import { useSelector, useDispatch } from '../../services/store'; // Redux-хуки
-// Импорт экшенов и селекторов для работы со сбросом пароля
-import {
-  resetPasswordThunk,
-  getUserErrorSelector,
-  clearUserError
-} from '@slices';
+import { ResetPasswordUI } from '@ui-pages';
+import { useSelector, useDispatch } from '../../services/store';
+import { resetPasswordThunk, selectUserError, clearError } from '@slices';
 
-// Определение функционального компонента ResetPassword
 export const ResetPassword: FC = () => {
-  const navigate = useNavigate(); // Навигация
-  const dispatch = useDispatch(); // Диспетчер Redux
-
-  // Локальные состояния для управления полями формы
-  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [token, setToken] = useState('');
-  const error = useSelector(getUserErrorSelector) as string; // Получение ошибки из состояния
+  const [password, setPassword] = useState('');
+  const error = useSelector(selectUserError) as string;
 
-  // Обработчик отправки формы
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault(); // Предотвращение перезагрузки страницы
-    dispatch(resetPasswordThunk({ password, token })).then((data) => {
-      if (data.payload) {
-        // Если сброс успешен
-        localStorage.removeItem('resetPassword'); // Удаление маркера сброса пароля
-        navigate('/login'); // Переход на страницу входа
+  // Проверяем наличие ключа в localStorage
+  useEffect(() => {
+    const hasResetFlag = localStorage.getItem('resetPassword'); // Получаем значение
+    if (!hasResetFlag) {
+      navigate('/forgot-password', { replace: true }); // Если нет флага, редиректим
+    }
+    dispatch(clearError()); // Очищаем ошибки при монтировании
+  }, [navigate, dispatch]);
+
+  // Обработчик формы
+  const handleSubmit = async (e: SyntheticEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await dispatch(resetPasswordThunk({ password, token }));
+
+      if (resetPasswordThunk.fulfilled.match(response)) {
+        localStorage.removeItem('resetPassword'); // Удаляем маркер
+        navigate('/login'); // Редирект на логин
       }
-    });
+    } catch (err) {
+      console.error('Ошибка при сбросе пароля:', err);
+    }
   };
 
-  // Очистка ошибки при монтировании компонента
-  useEffect(() => {
-    dispatch(clearUserError());
-  }, [dispatch]);
-
-  // Проверка наличия маркера сброса пароля в локальном хранилище
-  useEffect(() => {
-    if (!localStorage.getItem('resetPassword')) {
-      navigate('/forgot-password', { replace: true }); // Перенаправление на страницу восстановления пароля
-    }
-  }, [navigate]);
-
-  // Рендер UI-компонента с передачей данных и обработчиков в пропсы
   return (
     <ResetPasswordUI
-      errorText={error} // Текст ошибки
-      password={password} // Текущий пароль
-      token={token} // Текущий токен
-      setPassword={setPassword} // Обработчик изменения пароля
-      setToken={setToken} // Обработчик изменения токена
-      handleSubmit={handleSubmit} // Обработчик отправки формы
+      password={password}
+      token={token}
+      errorText={error}
+      setPassword={setPassword}
+      setToken={setToken}
+      handleSubmit={handleSubmit}
     />
   );
 };

@@ -1,48 +1,31 @@
-// Импорт типа FC (Functional Component) для определения функционального компонента.
-import { FC } from 'react';
+// Импорт необходимых библиотек и компонентов
+import { FC } from 'react'; // Импорт типа для функциональных компонентов
+import { TOrder } from '@utils-types'; // Импорт типа заказов
+import { FeedInfoUI } from '@ui'; // UI-компонент для отображения информации о фиде
+import { useSelector } from '../../services/store'; // Хук для получения данных из Redux
+import { selectFeed } from '@slices'; // Селектор состояния фида
 
-// Импорт типа заказа.
-import { TOrder } from '@utils-types';
-
-// Импорт UI-компонента для отображения информации о ленте заказов.
-import { FeedInfoUI } from '@ui';
-
-// Импорт хука для получения данных из Redux-хранилища.
-import { useSelector } from '../../services/store';
-
-// Импорт селектора для получения состояния ленты заказов.
-import { getFeedStateSelector } from '@slices';
-
-// Вспомогательная функция для фильтрации и получения номеров заказов по их статусу.
-const getOrders = (orders: TOrder[], status: string): number[] =>
+/**
+ * Функция для получения первых 20 номеров заказов по заданному статусу.
+ */
+const getFirstTwentyOrders = (orders: TOrder[], status: string): number[] =>
   orders
-    .filter((item) => item.status === status) // Фильтрация заказов по статусу.
-    .map((item) => item.number) // Извлечение номера заказа.
-    .slice(0, 20); // Ограничение до 20 элементов.
+    .filter((order) => order.status === status) // Фильтрация заказов по статусу
+    .map((order) => order.number) // Извлечение номеров заказов
+    .slice(0, 20); // Обрезка массива до 20 элементов
 
-// Функциональный компонент для отображения информации о ленте заказов.
-export const FeedInfo: FC = () => {
-  // Получение состояния ленты заказов из хранилища.
-  const ordersState = useSelector(getFeedStateSelector);
+/**
+ * Компонент для отображения общей информации о ленте заказов.
+ */
+export const FeedStats: FC = () => {
+  // Получение состояния фида из Redux (список заказов, общее количество и количество за сегодня)
+  const { orders, total, totalToday } = useSelector(selectFeed);
 
-  // Извлечение списка заказов из состояния.
-  const orders: TOrder[] = ordersState.orders;
-
-  // Извлечение общей информации о ленте (всего заказов и заказов за сегодня).
-  const feed = { total: ordersState.total, totalToday: ordersState.totalToday };
-
-  // Получение номеров выполненных заказов.
-  const readyOrders = getOrders(orders, 'done');
-
-  // Получение номеров заказов в процессе выполнения.
-  const pendingOrders = getOrders(orders, 'pending');
-
-  // Рендер UI-компонента с передачей данных о заказах.
   return (
     <FeedInfoUI
-      readyOrders={readyOrders} // Список выполненных заказов.
-      pendingOrders={pendingOrders} // Список заказов в процессе выполнения.
-      feed={feed} // Общая информация о ленте.
+      readyOrders={getFirstTwentyOrders(orders, 'done')} // Передача выполненных заказов
+      pendingOrders={getFirstTwentyOrders(orders, 'pending')} // Передача заказов в процессе выполнения
+      feed={{ total, totalToday }} // Общая статистика заказов
     />
   );
 };

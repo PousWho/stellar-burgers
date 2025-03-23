@@ -1,100 +1,72 @@
-// Импорт хука для отслеживания видимости элемента на экране.
+// Хук для отслеживания видимости элементов на экране
 import { useInView } from 'react-intersection-observer';
-
-// Импорт React-хуков для управления состоянием, рефами и эффектами.
+// React-хуки для состояния, рефов и эффектов
 import { useState, useRef, useEffect, FC } from 'react';
-
-// Импорт типов для вкладок и ингредиентов.
+// Типы для вкладок и ингредиентов
 import { TTabMode, TIngredient } from '@utils-types';
-
-// Импорт UI-компонента для отображения ингредиентов бургера.
+// UI-компонент для отображения списка ингредиентов
 import { BurgerIngredientsUI } from '../ui/burger-ingredients';
-
-// Импорт хука для получения данных из Redux-хранилища.
+// Хук для получения данных из Redux-хранилища
 import { useSelector } from '../../services/store';
+// Селектор для получения списка ингредиентов
+import { selectIngredientList } from '@slices';
 
-// Импорт селектора для получения ингредиентов из хранилища.
-import { getIngredientsSelector } from '@slices';
-
-// Компонент для отображения ингредиентов бургера.
+// Компонент списка ингредиентов для бургера
 export const BurgerIngredients: FC = () => {
-  // Получение списка ингредиентов из хранилища.
-  const ingredients: TIngredient[] = useSelector(getIngredientsSelector);
+  const ingredients = useSelector(selectIngredientList); // Получение ингредиентов из Redux
 
-  // Фильтрация ингредиентов по их типу (булки, основные, соусы).
-  const buns = ingredients.filter((ingredient) => {
-    if (ingredient.type === 'bun') {
-      return ingredient;
-    }
-  });
-  const mains = ingredients.filter((ingredient) => {
-    if (ingredient.type === 'main') {
-      return ingredient;
-    }
-  });
-  const sauces = ingredients.filter((ingredient) => {
-    if (ingredient.type === 'sauce') {
-      return ingredient;
-    }
-  });
+  // Разделение ингредиентов по категориям
+  const buns = ingredients.filter((item) => item.type === 'bun');
+  const mains = ingredients.filter((item) => item.type === 'main');
+  const sauces = ingredients.filter((item) => item.type === 'sauce');
 
-  // Состояние для текущей активной вкладки.
+  // Состояние для текущей активной вкладки
   const [currentTab, setCurrentTab] = useState<TTabMode>('bun');
 
-  // Рефы для заголовков разделов (булки, начинки, соусы).
+  // Рефы для заголовков секций
   const titleBunRef = useRef<HTMLHeadingElement>(null);
   const titleMainRef = useRef<HTMLHeadingElement>(null);
   const titleSaucesRef = useRef<HTMLHeadingElement>(null);
 
-  // Рефы для отслеживания видимости секций.
-  const [bunsRef, inViewBuns] = useInView({
-    threshold: 0
-  });
+  // Отслеживание видимости секций
+  const [bunsRef, inViewBuns] = useInView({ threshold: 0 });
+  const [mainsRef, inViewFilling] = useInView({ threshold: 0 });
+  const [saucesRef, inViewSauces] = useInView({ threshold: 0 });
 
-  const [mainsRef, inViewFilling] = useInView({
-    threshold: 0
-  });
-
-  const [saucesRef, inViewSauces] = useInView({
-    threshold: 0
-  });
-
-  // Эффект для переключения текущей вкладки при изменении видимости секций.
+  // Обновление текущей вкладки при изменении видимости секций
   useEffect(() => {
-    if (inViewBuns) {
-      setCurrentTab('bun');
-    } else if (inViewSauces) {
-      setCurrentTab('sauce');
-    } else if (inViewFilling) {
-      setCurrentTab('main');
-    }
+    if (inViewBuns) setCurrentTab('bun');
+    else if (inViewSauces) setCurrentTab('sauce');
+    else if (inViewFilling) setCurrentTab('main');
   }, [inViewBuns, inViewFilling, inViewSauces]);
 
-  // Обработчик для клика по вкладке. Скроллит к соответствующей секции.
+  // Обработчик клика по вкладке (скролл к нужному разделу)
   const onTabClick = (tab: string) => {
-    setCurrentTab(tab as TTabMode);
-    if (tab === 'bun')
-      titleBunRef.current?.scrollIntoView({ behavior: 'smooth' });
-    if (tab === 'main')
-      titleMainRef.current?.scrollIntoView({ behavior: 'smooth' });
-    if (tab === 'sauce')
-      titleSaucesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setCurrentTab(tab as TTabMode); // Приводим строку к нужному типу
+
+    const refMap: Record<string, React.RefObject<HTMLHeadingElement>> = {
+      bun: titleBunRef,
+      main: titleMainRef,
+      sauce: titleSaucesRef
+    };
+
+    refMap[tab]?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Рендер UI-компонента с передачей всех данных и обработчиков.
+  // Рендер UI-компонента с передачей данных и обработчиков
   return (
     <BurgerIngredientsUI
-      currentTab={currentTab} // Текущая активная вкладка.
-      buns={buns} // Список булок.
-      mains={mains} // Список начинок.
-      sauces={sauces} // Список соусов.
-      titleBunRef={titleBunRef} // Реф заголовка булок.
-      titleMainRef={titleMainRef} // Реф заголовка начинок.
-      titleSaucesRef={titleSaucesRef} // Реф заголовка соусов.
-      bunsRef={bunsRef} // Реф для отслеживания видимости булок.
-      mainsRef={mainsRef} // Реф для отслеживания видимости начинок.
-      saucesRef={saucesRef} // Реф для отслеживания видимости соусов.
-      onTabClick={onTabClick} // Обработчик клика по вкладке.
+      currentTab={currentTab}
+      buns={buns}
+      mains={mains}
+      sauces={sauces}
+      titleBunRef={titleBunRef}
+      titleMainRef={titleMainRef}
+      titleSaucesRef={titleSaucesRef}
+      bunsRef={bunsRef}
+      mainsRef={mainsRef}
+      saucesRef={saucesRef}
+      onTabClick={onTabClick}
     />
   );
 };

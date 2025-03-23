@@ -2,89 +2,88 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getFeedsApi, getOrdersApi } from '@api';
 import { TOrder } from '@utils-types';
 
-// Интерфейс состояния фида
-export interface feedState {
-  isLoading: boolean; // Состояние загрузки
-  orders: TOrder[]; // Список заказов
-  total: number; // Общее количество заказов
+// Определение интерфейса состояния ленты заказов
+export interface FeedState {
+  isLoading: boolean; // Флаг загрузки
+  orders: TOrder[]; // Массив заказов
+  total: number; // Общее количество заказов за все время
   totalToday: number; // Количество заказов за сегодня
-  error: string | null; // Сообщение об ошибке
+  error: string | null; // Ошибка при загрузке данных
 }
 
-// Начальное состояние
-const initialState: feedState = {
-  isLoading: false, // Изначально загрузка не выполняется
-  orders: [], // Список заказов пуст
-  total: 0, // Нет данных о количестве заказов
-  totalToday: 0, // Нет данных о заказах за сегодня
-  error: null // Ошибок нет
+// Начальное состояние редьюсера
+const initialState: FeedState = {
+  isLoading: false,
+  orders: [],
+  total: 0,
+  totalToday: 0,
+  error: null
 };
 
-// Асинхронное действие для получения общего фида заказов
-export const getFeedThunk = createAsyncThunk(
-  'feed/getFeed', // Имя действия
-  getFeedsApi // Функция API для получения данных
-);
+// Асинхронный экшен для получения общей ленты заказов
+export const getFeedThunk = createAsyncThunk('feed/getFeed', getFeedsApi);
 
-// Асинхронное действие для получения заказов пользователя
+// Асинхронный экшен для получения заказов пользователя
 export const getOrdersThunk = createAsyncThunk(
-  'feed/getProfileFeed', // Имя действия
-  getOrdersApi // Функция API для получения данных
+  'feed/getProfileFeed',
+  getOrdersApi
 );
 
-// Создание слайса
+// Функция для установки состояния загрузки
+const setLoadingState = (state: FeedState) => {
+  state.isLoading = true;
+  state.error = null;
+};
+
+// Функция для установки ошибки
+const setErrorState = (state: FeedState, error: string | undefined) => {
+  state.isLoading = false;
+  state.error = error ?? 'Unknown error'; // Если error undefined, устанавливаем "Unknown error"
+};
+
+// Создание слайса состояния для ленты заказов
 const feedSlice = createSlice({
   name: 'feed', // Имя слайса
   initialState, // Начальное состояние
-  reducers: {}, // Нет обычных редьюсеров
+  reducers: {}, // Обычные редьюсеры (в данном случае не используются)
   selectors: {
-    // Селектор для получения полного состояния
-    getFeedStateSelector: (state) => state,
-    // Селектор для получения списка заказов
-    getOrdersSelector: (state) => state.orders
+    selectFeed: (state) => state, // Селектор для получения всего состояния ленты
+    selectOrders: (state) => state.orders // Селектор для получения массива заказов
   },
   extraReducers: (builder) => {
-    // Обработка состояния для getFeedThunk
     builder
-      .addCase(getFeedThunk.pending, (state) => {
-        state.isLoading = true; // Устанавливаем флаг загрузки
-        state.error = null; // Сбрасываем ошибки
-      })
-      .addCase(getFeedThunk.rejected, (state, { error }) => {
-        state.isLoading = false; // Сбрасываем флаг загрузки
-        state.error = error.message || 'Unknown error'; // Сохраняем ошибку
-      })
+      // Обработка загрузки ленты заказов
+      .addCase(getFeedThunk.pending, setLoadingState)
+      .addCase(getFeedThunk.rejected, (state, { error }) =>
+        setErrorState(state, error.message)
+      )
       .addCase(getFeedThunk.fulfilled, (state, { payload }) => {
-        state.isLoading = false; // Завершаем загрузку
-        state.error = null; // Сбрасываем ошибки
-        state.orders = payload.orders; // Сохраняем заказы
-        state.total = payload.total; // Сохраняем общее количество
-        state.totalToday = payload.totalToday; // Сохраняем количество за сегодня
-      });
-
-    // Обработка состояния для getOrdersThunk
-    builder
-      .addCase(getOrdersThunk.pending, (state) => {
-        state.isLoading = true; // Устанавливаем флаг загрузки
-        state.error = null; // Сбрасываем ошибки
+        Object.assign(state, {
+          isLoading: false,
+          error: null,
+          orders: payload.orders, // Сохраняем заказы в состояние
+          total: payload.total, // Общее количество заказов
+          totalToday: payload.totalToday // Количество заказов за сегодня
+        });
       })
-      .addCase(getOrdersThunk.rejected, (state, { error }) => {
-        state.isLoading = false; // Сбрасываем флаг загрузки
-        state.error = error.message || 'Unknown error'; // Сохраняем ошибку
-      })
+      // Обработка загрузки заказов пользователя
+      .addCase(getOrdersThunk.pending, setLoadingState)
+      .addCase(getOrdersThunk.rejected, (state, { error }) =>
+        setErrorState(state, error.message)
+      )
       .addCase(getOrdersThunk.fulfilled, (state, { payload }) => {
-        state.isLoading = false; // Завершаем загрузку
-        state.error = null; // Сбрасываем ошибки
-        state.orders = payload; // Сохраняем заказы пользователя
+        state.isLoading = false;
+        state.error = null;
+        state.orders = payload; // Обновляем заказы пользователя
       });
   }
 });
 
-// Экспорт начального состояния
+// Экспорт селекторов для удобного доступа к данным
+export const { selectFeed, selectOrders } = feedSlice.selectors;
+
+// Экспорт начального состояния (если нужно использовать отдельно)
 export { initialState as feedInitialState };
 
-// Экспорт селекторов
-export const { getFeedStateSelector, getOrdersSelector } = feedSlice.selectors;
-
-// Экспорт редьюсера
+// Экспорт редьюсера слайса
 export default feedSlice.reducer;

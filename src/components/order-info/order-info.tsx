@@ -1,86 +1,52 @@
-// Импортируем необходимые типы и хуки.
 import { FC, useEffect, useMemo } from 'react';
-import { Preloader } from '../ui/preloader'; // Компонент для отображения загрузки.
-import { OrderInfoUI } from '../ui/order-info'; // UI-компонент для отображения информации о заказе.
-import { TIngredient } from '@utils-types'; // Тип для ингредиентов.
-import { useParams } from 'react-router-dom'; // Хук для получения параметров URL.
-import { useDispatch, useSelector } from '../../services/store'; // Хуки для работы с Redux.
-import {
-  getOrderThunk,
-  getOrderSelector,
-  getIngredientsSelector
-} from '@slices'; // Диспатчи и селекторы для получения данных о заказе и ингредиентах.
+import { Preloader } from '../ui/preloader';
+import { OrderInfoUI } from '../ui/order-info';
+import { TIngredient } from '@utils-types';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from '../../services/store';
+import { getOrderThunk, selectOrder, selectIngredientList } from '@slices';
 
-// Основной компонент для отображения информации о заказе.
 export const OrderInfo: FC = () => {
   const dispatch = useDispatch();
-  // Получаем номер заказа из параметров URL.
-  const orderNubmer = Number(useParams().number);
+  const orderNumber = Number(useParams().number);
 
-  // Запускаем запрос для получения информации о заказе при монтировании компонента.
   useEffect(() => {
-    dispatch(getOrderThunk(orderNubmer)); // Диспатчим экшен для получения заказа.
-  }, [dispatch, orderNubmer]);
+    if (!isNaN(orderNumber)) {
+      dispatch(getOrderThunk(orderNumber));
+    }
+  }, [dispatch, orderNumber]);
 
-  // Получаем данные о заказе из Redux.
-  const orderData = useSelector(getOrderSelector).order;
+  const orderData = useSelector(selectOrder);
+  const ingredients = useSelector(selectIngredientList);
 
-  // Получаем список ингредиентов из Redux.
-  const ingredients: TIngredient[] = useSelector(getIngredientsSelector);
-
-  // Мемоизация данных о заказе и ингредиентах для предотвращения лишних пересчетов.
   const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null; // Если данных о заказе или ингредиентах нет, возвращаем null.
+    if (!orderData || !ingredients.length) return null;
 
-    const date = new Date(orderData.createdAt); // Преобразуем дату создания заказа.
+    const date = new Date(orderData.createdAt);
 
-    // Тип для хранения ингредиентов с количеством.
-    type TIngredientsWithCount = {
-      [key: string]: TIngredient & { count: number };
-    };
+    // Создаём мапу для быстрого поиска ингредиентов
+    const ingredientsMap = new Map(ingredients.map((ing) => [ing._id, ing]));
 
-    // Формируем объект с ингредиентами и их количеством.
-    const ingredientsInfo = orderData.ingredients.reduce(
-      (acc: TIngredientsWithCount, item) => {
-        // Если ингредиент еще не добавлен, добавляем его с количеством 1.
-        if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
-          if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1
-            };
-          }
-        } else {
-          // Если ингредиент уже есть, увеличиваем его количество.
-          acc[item].count++;
-        }
+    // Подсчитываем количество каждого ингредиента
+    const ingredientsInfo = orderData.ingredients.reduce<
+      Record<string, TIngredient & { count: number }>
+    >((acc, id) => {
+      const ingredient = ingredientsMap.get(id);
+      if (ingredient) {
+        acc[id] = acc[id] || { ...ingredient, count: 0 };
+        acc[id].count++;
+      }
+      return acc;
+    }, {});
 
-        return acc;
-      },
-      {}
-    );
-
-    // Рассчитываем общую стоимость заказа, умножая цену каждого ингредиента на его количество.
+    // Подсчет общей стоимости заказа
     const total = Object.values(ingredientsInfo).reduce(
-      (acc, item) => acc + item.price * item.count,
+      (sum, item) => sum + item.price * item.count,
       0
     );
 
-    // Возвращаем полную информацию о заказе.
-    return {
-      ...orderData,
-      ingredientsInfo, // Информация о ингредиентах с количеством.
-      date, // Дата заказа.
-      total // Общая стоимость заказа.
-    };
-  }, [orderData, ingredients]); // Пересчитываем, если изменились orderData или ingredients.
+    return { ...orderData, ingredientsInfo, date, total };
+  }, [orderData, ingredients]);
 
-  // Если информация о заказе еще не получена, показываем прелоадер.
-  if (!orderInfo) {
-    return <Preloader />;
-  }
-
-  // Рендерим UI-компонент с переданными данными о заказе.
-  return <OrderInfoUI orderInfo={orderInfo} />;
+  return orderInfo ? <OrderInfoUI orderInfo={orderInfo} /> : <Preloader />;
 };

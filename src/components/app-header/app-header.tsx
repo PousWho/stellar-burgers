@@ -8,12 +8,12 @@ import { AppHeaderUI } from '@ui';
 import { FC } from 'react';
 
 // Импорт селектора для получения данных пользователя из хранилища.
-import { getUserSelector } from '@slices';
+import { selectUser } from '@slices';
 
 // Компонент заголовка приложения.
-export const HeaderApp: FC = () => {
+export const AppHeader: FC = () => {
   // Получение имени пользователя из хранилища через селектор.
-  const userName = useSelector(getUserSelector)?.name;
+  const userName = useSelector(selectUser)?.name;
 
   // Возврат UI-компонента с передачей имени пользователя в пропсы.
   return <AppHeaderUI userName={userName} />;

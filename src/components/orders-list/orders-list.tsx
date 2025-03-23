@@ -1,14 +1,20 @@
-// Импортируем необходимые типы и компоненты.
-import { FC, memo } from 'react'; // Импорт функционального компонента и memo для оптимизации ререндеров.
-import { OrdersListProps } from './type'; // Типы для пропсов компонента.
-import { OrdersListUI } from '@ui'; // UI-компонент для отображения списка заказов.
+import { FC, memo, useMemo } from 'react'; // Импортируем memo для оптимизации и useMemo для кэширования вычислений.
+import { OrdersListProps } from './type';
+import { OrdersListUI } from '@ui';
 
 export const OrdersList: FC<OrdersListProps> = memo(({ orders }) => {
-  // Создаем новый массив, сортируя заказы по дате в порядке убывания (сначала самые новые).
-  const orderByDate = [...orders].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  // Мемоизируем сортировку, чтобы не пересчитывать её при каждом ререндере.
+  const orderByDate = useMemo(
+    () =>
+      orders
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
+    [orders] // Пересчитываем только если `orders` изменился.
   );
 
-  // Рендерим UI-компонент, передавая отсортированные заказы.
+  // Передаём отсортированные заказы в UI-компонент.
   return <OrdersListUI orderByDate={orderByDate} />;
 });

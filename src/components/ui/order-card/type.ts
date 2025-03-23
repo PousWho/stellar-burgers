@@ -9,7 +9,7 @@ export type OrderCardUIProps = {
 
 type TOrderInfo = {
   ingredientsInfo: TIngredient[];
-  ingredientsToShow: TIngredient[];
+  ingredientsShown: TIngredient[];
   remains: number;
   total: number;
   date: Date;
