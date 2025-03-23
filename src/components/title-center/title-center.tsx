@@ -19,5 +19,9 @@ export const Center: FC<TCenter> = memo(({ title, children }) => {
     }
   }, [location.pathname]); // Добавили зависимость, чтобы эффект не срабатывал без необходимости
 
-  return <CenterUI title={title} titleStyle={titleStyle}>{children}</CenterUI>;
+  return (
+    <CenterUI title={title} titleStyle={titleStyle}>
+      {children}
+    </CenterUI>
+  );
 });
