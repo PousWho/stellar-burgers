@@ -34,7 +34,7 @@ export const OrderCardUI: FC<OrderCardUIProps> = memo(
       )}
       <div className={`pt-6 ${styles.order_content}`}>
         <ul className={styles.ingredients}>
-          {orderInfo.ingredientsToShow.map((ingredient, index) => {
+          {orderInfo.ingredientsShown.map((ingredient, index) => {
             let zIndex = maxIngredients - index;
             let right = 20 * index;
             return (

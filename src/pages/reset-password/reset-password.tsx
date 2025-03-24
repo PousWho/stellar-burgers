@@ -1,37 +1,46 @@
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { resetPasswordApi } from '@api';
 import { ResetPasswordUI } from '@ui-pages';
+import { useSelector, useDispatch } from '../../services/store';
+import { resetPasswordThunk, selectUserError, clearError } from '@slices';
 
 export const ResetPassword: FC = () => {
   const navigate = useNavigate();
-  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
   const [token, setToken] = useState('');
-  const [error, setError] = useState<Error | null>(null);
+  const [password, setPassword] = useState('');
+  const error = useSelector(selectUserError) as string;
 
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault();
-    setError(null);
-    resetPasswordApi({ password, token })
-      .then(() => {
-        localStorage.removeItem('resetPassword');
-        navigate('/login');
-      })
-      .catch((err) => setError(err));
-  };
-
+  // Проверяем наличие ключа в localStorage
   useEffect(() => {
-    if (!localStorage.getItem('resetPassword')) {
-      navigate('/forgot-password', { replace: true });
+    const hasResetFlag = localStorage.getItem('resetPassword'); // Получаем значение
+    if (!hasResetFlag) {
+      navigate('/forgot-password', { replace: true }); // Если нет флага, редиректим
     }
-  }, [navigate]);
+    dispatch(clearError()); // Очищаем ошибки при монтировании
+  }, [navigate, dispatch]);
+
+  // Обработчик формы
+  const handleSubmit = async (e: SyntheticEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await dispatch(resetPasswordThunk({ password, token }));
+
+      if (resetPasswordThunk.fulfilled.match(response)) {
+        localStorage.removeItem('resetPassword'); // Удаляем маркер
+        navigate('/login'); // Редирект на логин
+      }
+    } catch (err) {
+      console.error('Ошибка при сбросе пароля:', err);
+    }
+  };
 
   return (
     <ResetPasswordUI
-      errorText={error?.message}
       password={password}
       token={token}
+      errorText={error}
       setPassword={setPassword}
       setToken={setToken}
       handleSubmit={handleSubmit}

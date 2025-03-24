@@ -33,7 +33,7 @@ export const DefaultOrderCard: Story = {
           image_mobile: ''
         }
       ],
-      ingredientsToShow: [
+      ingredientsShown: [
         {
           _id: '111',
           name: 'Булка',

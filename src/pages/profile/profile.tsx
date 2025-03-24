@@ -1,61 +1,87 @@
 import { ProfileUI } from '@ui-pages';
-import { FC, SyntheticEvent, useEffect, useState } from 'react';
+import {
+  FC,
+  SyntheticEvent,
+  useEffect,
+  useState,
+  useCallback,
+  useRef
+} from 'react';
+import { useSelector, useDispatch } from '../../services/store';
+import { selectUser, updateUserThunk } from '@slices';
+import { TUser } from '@utils-types';
 
 export const Profile: FC = () => {
-  /** TODO: взять переменную из стора */
-  const user = {
-    name: '',
-    email: ''
-  };
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser) as TUser;
+  const prevUserRef = useRef(user); // Храним предыдущее состояние пользователя
 
+  // Локальное состояние формы
   const [formValue, setFormValue] = useState({
     name: user.name,
     email: user.email,
     password: ''
   });
 
+  // Обновляем состояние формы при изменении данных пользователя
   useEffect(() => {
-    setFormValue((prevState) => ({
-      ...prevState,
-      name: user?.name || '',
-      email: user?.email || ''
-    }));
+    if (prevUserRef.current !== user) {
+      setFormValue({
+        name: user?.name || '',
+        email: user?.email || '',
+        password: ''
+      });
+      prevUserRef.current = user;
+    }
   }, [user]);
 
+  // Определение, изменена ли форма
   const isFormChanged =
     formValue.name !== user?.name ||
     formValue.email !== user?.email ||
     !!formValue.password;
 
-  const handleSubmit = (e: SyntheticEvent) => {
-    e.preventDefault();
-  };
+  // Мемоизированный обработчик отправки формы
+  const handleSubmit = useCallback(
+    (e: SyntheticEvent) => {
+      e.preventDefault();
+      dispatch(updateUserThunk(formValue));
+      setFormValue((prev) => ({ ...prev, password: '' })); // Очищаем пароль после отправки
+    },
+    [dispatch, formValue]
+  );
 
-  const handleCancel = (e: SyntheticEvent) => {
-    e.preventDefault();
-    setFormValue({
-      name: user.name,
-      email: user.email,
-      password: ''
-    });
-  };
+  // Мемоизированный обработчик отмены изменений
+  const handleCancel = useCallback(
+    (e: SyntheticEvent) => {
+      e.preventDefault();
+      setFormValue({
+        name: user.name,
+        email: user.email,
+        password: ''
+      });
+    },
+    [user]
+  );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormValue((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value
-    }));
-  };
+  // Обработчик изменения значений формы
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormValue((prev) => ({
+        ...prev,
+        [e.target.name]: e.target.value
+      }));
+    },
+    []
+  );
 
   return (
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
-      handleCancel={handleCancel}
       handleSubmit={handleSubmit}
+      handleCancel={handleCancel}
       handleInputChange={handleInputChange}
     />
   );
-
-  return null;
 };
