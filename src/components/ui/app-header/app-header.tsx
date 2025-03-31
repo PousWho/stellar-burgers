@@ -59,17 +59,17 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
       <NavLink
         to='/profile'
         className={({ isActive }) =>
-          `${styles.link} ${isActive ? styles.link_active : ''}`
+          `${styles.link} ${styles.link_position_last} ${isActive ? styles.link_active : ''}`
         }
       >
         {({ isActive }) => (
-          <div className={styles.link_position_last}>
+          <>
             {/* Иконка "Профиль", меняет цвет в зависимости от активности */}
             <ProfileIcon type={isActive ? 'primary' : 'secondary'} />
             <p className='text text_type_main-default ml-2'>
               {userName || 'Личный кабинет'}
             </p>
-          </div>
+          </>
         )}
       </NavLink>
     </nav>
