@@ -112,7 +112,14 @@ const App = () => {
           <Route path='/profile'>
             <Route index element={<Profile />} />
             <Route path='orders' element={<ProfileOrders />} />
-            <Route path='orders/:number' element={<OrderInfo />} />
+            
+            <Route path='orders/:number'
+                   element={
+                  <Center title={`#${location.pathname.match(/\d+/)}`}>
+                    <OrderInfo />
+                  </Center>
+                 } 
+               />
           </Route>
         </Route>
         {/* Страница не найдена */}
