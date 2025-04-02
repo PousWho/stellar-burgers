@@ -1,38 +1,54 @@
+// Импорт forwardRef для передачи ref, а также useMemo для оптимизации вычислений.
 import { forwardRef, useMemo } from 'react';
+
+// Импорт типов для свойств компонента и ингредиента.
 import { TIngredientsCategoryProps } from './type';
 import { TIngredient } from '@utils-types';
+
+// Импорт UI-компонента для отображения категории ингредиентов.
 import { IngredientsCategoryUI } from '../ui/ingredients-category';
 
+// Импорт хука для получения данных из Redux-хранилища.
+import { useSelector } from '../../services/store';
+
+// Импорт селектора для получения данных о конструкторе бургера.
+import { selectConstructorState } from '@slices';
+
+/**
+ * Компонент для отображения категории ингредиентов с поддержкой передачи ref.
+ */
 export const IngredientsCategory = forwardRef<
-  HTMLUListElement,
-  TIngredientsCategoryProps
+  HTMLUListElement, // Тип передаваемого ref (список UL).
+  TIngredientsCategoryProps // Тип свойств компонента.
 >(({ title, titleRef, ingredients }, ref) => {
-  /** TODO: взять переменную из стора */
-  const burgerConstructor = {
-    bun: {
-      _id: ''
-    },
-    ingredients: []
-  };
+  // Получение данных о текущем состоянии конструктора бургера из Redux-хранилища.
+  const { bun, ingredients: items } = useSelector(
+    selectConstructorState
+  ).constructorItems;
 
+  // Определение счетчиков для ингредиентов в конструкторе.
   const ingredientsCounters = useMemo(() => {
-    const { bun, ingredients } = burgerConstructor;
-    const counters: { [key: string]: number } = {};
-    ingredients.forEach((ingredient: TIngredient) => {
-      if (!counters[ingredient._id]) counters[ingredient._id] = 0;
-      counters[ingredient._id]++;
-    });
-    if (bun) counters[bun._id] = 2;
-    return counters;
-  }, [burgerConstructor]);
+    const counters: Record<string, number> = {}; // Объект для хранения количества каждого ингредиента.
 
+    // Подсчет количества ингредиентов в конструкторе.
+    items.forEach(({ _id }: TIngredient) => {
+      counters[_id] = (counters[_id] || 0) + 1;
+    });
+
+    // Если есть булка, добавляем двойной счетчик.
+    if (bun) counters[bun._id] = 2;
+
+    return counters;
+  }, [bun, items]); // Пересчет происходит только при изменении конструктора.
+
+  // Рендер UI-компонента для категории ингредиентов с передачей необходимых данных.
   return (
     <IngredientsCategoryUI
-      title={title}
-      titleRef={titleRef}
-      ingredients={ingredients}
-      ingredientsCounters={ingredientsCounters}
-      ref={ref}
+      title={title} // Название категории.
+      titleRef={titleRef} // Ссылка на заголовок категории.
+      ingredients={ingredients} // Список ингредиентов в категории.
+      ingredientsCounters={ingredientsCounters} // Счетчики ингредиентов.
+      ref={ref} // Передача ref для списка UL.
     />
   );
 });

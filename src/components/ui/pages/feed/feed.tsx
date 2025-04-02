@@ -3,7 +3,7 @@ import { FC, memo } from 'react';
 import styles from './feed.module.css';
 
 import { FeedUIProps } from './type';
-import { OrdersList, FeedInfo } from '@components';
+import { OrdersList, FeedStats } from '@components';
 import { RefreshButton } from '@zlden/react-developer-burger-ui-components';
 
 export const FeedUI: FC<FeedUIProps> = memo(({ orders, handleGetFeeds }) => (
@@ -23,7 +23,7 @@ export const FeedUI: FC<FeedUIProps> = memo(({ orders, handleGetFeeds }) => (
         <OrdersList orders={orders} />
       </div>
       <div className={styles.columnInfo}>
-        <FeedInfo />
+        <FeedStats />
       </div>
     </div>
   </main>
