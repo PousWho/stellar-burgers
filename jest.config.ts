@@ -1,25 +1,23 @@
-/**
- * Jest Configuration for TypeScript projects using ts-jest
- * For more details, visit: https://jestjs.io/docs/configuration
- */
-
 import type { JestConfigWithTsJest } from 'ts-jest';
 
 const config: JestConfigWithTsJest = {
-  preset: 'ts-jest', // Используем ts-jest для тестирования TypeScript
-  transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        //tsconfig: 'tsconfig.json', // Путь к tsconfig.json (можно поменять)
-        //diagnostics: true, // Показывать ошибки TypeScript в тестах
-      },
-    ],
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: {
+    '^@pages(.*)$': '<rootDir>/src/pages$1',
+    '^@components(.*)$': '<rootDir>/src/components$1',
+    '^@ui(.*)$': '<rootDir>/src/components/ui$1',
+    '^@ui-pages(.*)$': '<rootDir>/src/components/ui/pages$1',
+    '^@utils-types(.*)$': '<rootDir>/src/utils/types$1',
+    '^@api$': '<rootDir>/src/utils/burger-api.ts',
+    '^@slices(.*)$': '<rootDir>/src/services/slices$1',
+    '^@selectors(.*)$': '<rootDir>/src/services/selectors$1',
+    '^@store$': '<rootDir>/src/services/store',
   },
-  //testEnvironment: 'node', // Или 'jsdom', если тестируешь React-компоненты
-  //collectCoverage: true, // Включаем сбор покрытия кода тестами
-  //coverageDirectory: 'coverage', // Куда сохранять отчеты о покрытии
-  //moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'], // Какие расширения файлов использовать
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+  },
 };
 
 export default config;

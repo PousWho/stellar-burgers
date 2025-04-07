@@ -8,7 +8,7 @@ import { TConstructorIngredient, TOrder, TIngredient } from '@utils-types'; // �
 import { orderBurgerApi } from '@api'; // Импорт API для отправки заказа
 
 // Описание состояния конструктора бургера
-interface ConstructorState {
+export interface ConstructorState {
   isLoading: boolean; // Состояние загрузки (используется при асинхронных запросах)
   constructorItems: {
     bun: TConstructorIngredient | null; // Булочка бургера, может быть пустой

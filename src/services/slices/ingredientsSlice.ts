@@ -56,3 +56,4 @@ const ingredientsSlice = createSlice({
 export const { selectIngredientsStore, selectIngredientList } =
   ingredientsSlice.selectors;
 export default ingredientsSlice.reducer;
+export { initialState as inginitialState };

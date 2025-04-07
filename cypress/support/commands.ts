@@ -1,5 +1,15 @@
 /// <reference types="cypress" />
+/// <reference path="./commands.d.ts" />
 // ***********************************************
+Cypress.Commands.add('addIngredient', (type) => {
+  cy.get(`[data-cy="${type}"]`).find('button').click({ force: true });
+});
+
+
+
+
+
+
 // This example commands.ts shows you how to
 // create various custom commands and overwrite
 // existing commands.

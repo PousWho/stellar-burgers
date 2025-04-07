@@ -24,7 +24,7 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
           {({ isActive }) => (
             <>
               {/* Иконка "Конструктор", меняет цвет в зависимости от активности */}
-              <BurgerIcon type={isActive ? 'primary' : 'secondary'} /> 
+              <BurgerIcon type={isActive ? 'primary' : 'secondary'} />
               <p className='text text_type_main-default ml-2 mr-10'>
                 Конструктор
               </p>
@@ -47,14 +47,14 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
           )}
         </NavLink>
       </div>
-      
+
       {/* Логотип */}
       <div className={styles.logo}>
         <NavLink to='/'>
           <Logo className='' />
         </NavLink>
       </div>
-      
+
       {/* Ссылка на профиль пользователя */}
       <NavLink
         to='/profile'
