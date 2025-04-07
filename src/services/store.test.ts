@@ -1,5 +1,4 @@
-import { expect, test, describe } from '@jest/globals';
-import store from './store';
+import { rootReducer } from './store';
 import {
   userInitialState,
   orderInitialState,
@@ -8,16 +7,15 @@ import {
   constructorInitialState
 } from '@slices';
 
-describe('Тест store', () => {
-  test('Store должен содержать корректный initial state', () => {
-    const state = store.getState();
+test('rootReducer возвращает начальное состояние при неизвестном экшене', () => {
+  const unknownAction = { type: 'UNKNOWN_ACTION' };
+  const state = rootReducer(undefined, unknownAction);
 
-    expect(state).toEqual({
-      user: userInitialState,
-      feed: feedInitialState,
-      order: orderInitialState,
-      ingredients: inginitialState,
-      constructorbg: constructorInitialState
-    });
+  expect(state).toEqual({
+    user: userInitialState,
+    feed: feedInitialState,
+    order: orderInitialState,
+    ingredients: inginitialState,
+    constructorbg: constructorInitialState
   });
 });
